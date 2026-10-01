@@ -1,0 +1,100 @@
+{
+  "app": {
+    "name": "本地录音助手",
+    "tagline": "隐私优先的离线转写与摘要"
+  },
+  "nav": {
+    "workspace": "工作台",
+    "projects": "项目",
+    "allRecordings": "全部录音",
+    "recordings": "录音列表",
+    "deviceFiles": "设备文件",
+    "models": "模型",
+    "settings": "设置"
+  },
+  "search": {
+    "placeholder": "搜索转写、摘要、标签..."
+  },
+  "header": {
+    "deviceConnected": "录音笔已连接",
+    "noDevice": "未检测到设备",
+    "gpu": "显卡",
+    "vram": "显存"
+  },
+  "language": {
+    "ui": "界面语言",
+    "audio": "识别语言",
+    "output": "摘要输出"
+  },
+  "projects": {
+    "title": "项目",
+    "new": "新建项目",
+    "empty": "暂无项目",
+    "general": "通用笔记",
+    "count": "暂无录音 | 1 条录音 | {count} 条录音"
+  },
+  "dropzone": {
+    "title": "将音频文件拖放到此处",
+    "subtitle": "或点击浏览录音笔中的文件",
+    "browse": "浏览文件"
+  },
+  "pipeline": {
+    "title": "处理流程",
+    "idle": "空闲",
+    "decoding": "解码音频",
+    "transcribing": "语音转写",
+    "clustering": "说话人聚类",
+    "summarizing": "生成摘要",
+    "completed": "已完成",
+    "failed": "失败"
+  },
+  "tabs": {
+    "summary": "摘要报告",
+    "transcript": "转写时间轴"
+  },
+  "summary": {
+    "empty": "尚未生成摘要。",
+    "emptyHint": "处理录音后即可生成结构化的 Markdown 摘要。"
+  },
+  "transcript": {
+    "empty": "暂无转写内容。",
+    "emptyHint": "运行语音转写以构建按说话人对齐的时间轴。"
+  },
+  "status": {
+    "pending": "等待中",
+    "transcribing": "转写中",
+    "summarizing": "摘要中",
+    "completed": "已完成",
+    "failed": "失败"
+  },
+  "recordings": {
+    "empty": "暂无录音"
+  },
+  "actions": {
+    "transcribe": "语音转写",
+    "diarize": "说话人识别",
+    "summarize": "生成摘要",
+    "export": "导出 .md"
+  },
+  "workspace": {
+    "selectRecording": "未选择录音",
+    "selectRecordingHint": "拖入音频文件、从已连接的录音笔添加，或在左侧选择一条录音。"
+  },
+  "models": {
+    "title": "模型",
+    "subtitle": "模型将下载到应用的本地 models 文件夹，安装包不包含任何模型。",
+    "speechModels": "语音转写",
+    "speakerModels": "说话人分离",
+    "downloaded": "已下载",
+    "notDownloaded": "未下载",
+    "download": "下载",
+    "delete": "删除",
+    "directory": "模型目录"
+  },
+  "settings": {
+    "provider": "摘要服务",
+    "ollamaEndpoint": "Ollama 接口地址",
+    "openaiEndpoint": "OpenAI 兼容接口地址",
+    "model": "模型名称"
+  }
+}

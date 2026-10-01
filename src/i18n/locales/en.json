@@ -1,0 +1,100 @@
+{
+  "app": {
+    "name": "Local Recorder Assistant",
+    "tagline": "Private, offline transcription & summaries"
+  },
+  "nav": {
+    "workspace": "Workspace",
+    "projects": "Projects",
+    "allRecordings": "All Recordings",
+    "recordings": "Recordings",
+    "deviceFiles": "On Device",
+    "models": "Models",
+    "settings": "Settings"
+  },
+  "search": {
+    "placeholder": "Search transcripts, summaries, tags..."
+  },
+  "header": {
+    "deviceConnected": "Recorder connected",
+    "noDevice": "No device",
+    "gpu": "GPU",
+    "vram": "VRAM"
+  },
+  "language": {
+    "ui": "Interface",
+    "audio": "Audio recognition",
+    "output": "Summary output"
+  },
+  "projects": {
+    "title": "Projects",
+    "new": "New project",
+    "empty": "No projects yet",
+    "general": "General Notes",
+    "count": "no recordings | 1 recording | {count} recordings"
+  },
+  "dropzone": {
+    "title": "Drop audio files here",
+    "subtitle": "or click to browse recorder files",
+    "browse": "Browse files"
+  },
+  "pipeline": {
+    "title": "Processing pipeline",
+    "idle": "Idle",
+    "decoding": "Decoding",
+    "transcribing": "Transcribing",
+    "clustering": "Speaker clustering",
+    "summarizing": "Summarizing",
+    "completed": "Completed",
+    "failed": "Failed"
+  },
+  "tabs": {
+    "summary": "Summary Report",
+    "transcript": "Transcript Timeline"
+  },
+  "summary": {
+    "empty": "No summary generated yet.",
+    "emptyHint": "Process a recording to generate a structured Markdown summary."
+  },
+  "transcript": {
+    "empty": "No transcript available yet.",
+    "emptyHint": "Run speech-to-text to build a speaker-aligned timeline."
+  },
+  "status": {
+    "pending": "Pending",
+    "transcribing": "Transcribing",
+    "summarizing": "Summarizing",
+    "completed": "Completed",
+    "failed": "Failed"
+  },
+  "recordings": {
+    "empty": "No recordings yet"
+  },
+  "actions": {
+    "transcribe": "Transcribe",
+    "diarize": "Identify speakers",
+    "summarize": "Summarize",
+    "export": "Export .md"
+  },
+  "workspace": {
+    "selectRecording": "No recording selected",
+    "selectRecordingHint": "Drop an audio file, add one from the connected recorder, or pick a recording from the sidebar."
+  },
+  "models": {
+    "title": "Models",
+    "subtitle": "Models are downloaded into the app's local models folder. Nothing is bundled.",
+    "speechModels": "Speech-to-text",
+    "speakerModels": "Speaker diarization",
+    "downloaded": "Downloaded",
+    "notDownloaded": "Not downloaded",
+    "download": "Download",
+    "delete": "Delete",
+    "directory": "Models folder"
+  },
+  "settings": {
+    "provider": "Summary provider",
+    "ollamaEndpoint": "Ollama endpoint",
+    "openaiEndpoint": "OpenAI-compatible endpoint",
+    "model": "Model name"
+  }
+}

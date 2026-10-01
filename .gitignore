@@ -1,0 +1,80 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies / build output
+node_modules
+dist
+dist-ssr
+target
+build
+out
+
+# Downloaded model binaries (managed by the model downloader)
+models/*
+!models/.gitkeep
+
+# Credentials and secrets
+.env
+.env.*
+!.env.example
+*.env
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.secret
+*.secrets
+*.token
+*.credentials
+credentials.json
+credentials.yml
+credentials.yaml
+secrets.json
+secrets.yml
+secrets.yaml
+.netrc
+_netrc
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.asc
+*.gpg
+service-account*.json
+
+# Local / machine-specific configuration and paths
+*.local
+*.local.*
+.cargo/config.local.toml
+local.env
+local.settings.json
+*.code-workspace
+.direnv/
+.envrc
+
+# AI / assistant tooling
+.marscode/
+.mars/
+.continue/
+.cursor/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -1,0 +1,34 @@
+{
+  "stt_models": [
+    {
+      "id": "whisper-large-v3-turbo-q5",
+      "name": "Whisper Large v3 Turbo (Recommended)",
+      "size_mb": 1100,
+      "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin",
+      "filename": "ggml-large-v3-turbo-q5_0.bin"
+    },
+    {
+      "id": "whisper-medium-q5",
+      "name": "Whisper Medium (Balanced)",
+      "size_mb": 539,
+      "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium-q5_0.bin",
+      "filename": "ggml-medium-q5_0.bin"
+    },
+    {
+      "id": "whisper-small-q5",
+      "name": "Whisper Small (Fast)",
+      "size_mb": 182,
+      "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q5_1.bin",
+      "filename": "ggml-small-q5_1.bin"
+    }
+  ],
+  "diarization_models": [
+    {
+      "id": "camplusplus-onnx",
+      "name": "Cam++ Speaker Embedding Model",
+      "size_mb": 85,
+      "url": "https://huggingface.co/onnx-community/camplusplus/resolve/main/camplusplus.onnx",
+      "filename": "camplusplus.onnx"
+    }
+  ]
+}

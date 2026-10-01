@@ -1,0 +1,100 @@
+{
+  "app": {
+    "name": "Lokaler Rekorder-Assistent",
+    "tagline": "Private, Offline-Transkription & Zusammenfassungen"
+  },
+  "nav": {
+    "workspace": "Arbeitsbereich",
+    "projects": "Projekte",
+    "allRecordings": "Alle Aufnahmen",
+    "recordings": "Aufnahmen",
+    "deviceFiles": "Auf Gerät",
+    "models": "Modelle",
+    "settings": "Einstellungen"
+  },
+  "search": {
+    "placeholder": "Transkripte, Zusammenfassungen, Tags durchsuchen..."
+  },
+  "header": {
+    "deviceConnected": "Rekorder verbunden",
+    "noDevice": "Kein Gerät",
+    "gpu": "GPU",
+    "vram": "VRAM"
+  },
+  "language": {
+    "ui": "Oberfläche",
+    "audio": "Spracherkennung",
+    "output": "Zusammenfassung"
+  },
+  "projects": {
+    "title": "Projekte",
+    "new": "Neues Projekt",
+    "empty": "Noch keine Projekte",
+    "general": "Allgemeine Notizen",
+    "count": "keine Aufnahmen | 1 Aufnahme | {count} Aufnahmen"
+  },
+  "dropzone": {
+    "title": "Audiodateien hier ablegen",
+    "subtitle": "oder klicken, um Rekorder-Dateien zu durchsuchen",
+    "browse": "Dateien wählen"
+  },
+  "pipeline": {
+    "title": "Verarbeitung",
+    "idle": "Inaktiv",
+    "decoding": "Dekodierung",
+    "transcribing": "Transkription",
+    "clustering": "Sprecher-Clustering",
+    "summarizing": "Zusammenfassung",
+    "completed": "Abgeschlossen",
+    "failed": "Fehlgeschlagen"
+  },
+  "tabs": {
+    "summary": "Zusammenfassung",
+    "transcript": "Transkript-Zeitleiste"
+  },
+  "summary": {
+    "empty": "Noch keine Zusammenfassung erstellt.",
+    "emptyHint": "Verarbeiten Sie eine Aufnahme, um eine Markdown-Zusammenfassung zu erstellen."
+  },
+  "transcript": {
+    "empty": "Noch kein Transkript verfügbar.",
+    "emptyHint": "Starten Sie die Spracherkennung, um eine Sprecher-Zeitleiste zu erstellen."
+  },
+  "status": {
+    "pending": "Ausstehend",
+    "transcribing": "Transkribieren",
+    "summarizing": "Zusammenfassen",
+    "completed": "Abgeschlossen",
+    "failed": "Fehlgeschlagen"
+  },
+  "recordings": {
+    "empty": "Noch keine Aufnahmen"
+  },
+  "actions": {
+    "transcribe": "Transkribieren",
+    "diarize": "Sprecher erkennen",
+    "summarize": "Zusammenfassen",
+    "export": ".md exportieren"
+  },
+  "workspace": {
+    "selectRecording": "Keine Aufnahme ausgewählt",
+    "selectRecordingHint": "Ziehen Sie eine Audiodatei hierher, fügen Sie eine vom Rekorder hinzu oder wählen Sie links eine Aufnahme."
+  },
+  "models": {
+    "title": "Modelle",
+    "subtitle": "Modelle werden in den lokalen models-Ordner der App geladen. Es wird nichts mitgeliefert.",
+    "speechModels": "Sprache-zu-Text",
+    "speakerModels": "Sprechertrennung",
+    "downloaded": "Heruntergeladen",
+    "notDownloaded": "Nicht heruntergeladen",
+    "download": "Herunterladen",
+    "delete": "Löschen",
+    "directory": "Modellordner"
+  },
+  "settings": {
+    "provider": "Zusammenfassungs-Anbieter",
+    "ollamaEndpoint": "Ollama-Endpunkt",
+    "openaiEndpoint": "OpenAI-kompatibler Endpunkt",
+    "model": "Modellname"
+  }
+}
