@@ -146,6 +146,37 @@ export const useProjectsStore = defineStore("projects", () => {
     return tagsByRecording.value[recordingId] ?? [];
   }
 
+  const AUDIO_EXTENSIONS = [".mp3", ".wav", ".m4a", ".aac", ".flac"];
+
+  function isAudioPath(path: string): boolean {
+    const lower = path.toLowerCase();
+    return AUDIO_EXTENSIONS.some((extension) => lower.endsWith(extension));
+  }
+
+  function baseName(path: string): string {
+    const parts = path.split("/");
+    return parts[parts.length - 1] ?? path;
+  }
+
+  async function addRecordingsFromPaths(paths: string[]): Promise<number> {
+    const audioPaths = paths.filter(isAudioPath);
+
+    for (const path of audioPaths) {
+      await addRecording({
+        file_name: baseName(path),
+        source_path: path,
+        project_id: activeProjectId.value,
+        audio_duration_secs: null,
+      });
+    }
+
+    if (audioPaths.length > 0) {
+      await loadProjects();
+    }
+
+    return audioPaths.length;
+  }
+
   async function addRecording(input: NewRecording): Promise<Recording | null> {
     error.value = null;
     try {
@@ -227,6 +258,7 @@ export const useProjectsStore = defineStore("projects", () => {
     removeProject,
     renameProject,
     addRecording,
+    addRecordingsFromPaths,
     removeRecording,
     renameRecording,
     assignRecording,

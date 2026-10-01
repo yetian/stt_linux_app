@@ -16,18 +16,6 @@ const device = useDeviceStore();
 const models = useModelsStore();
 const ui = useUiStore();
 
-const AUDIO_EXTENSIONS = [".mp3", ".wav", ".m4a", ".aac", ".flac"];
-
-function isAudio(path: string): boolean {
-  const lower = path.toLowerCase();
-  return AUDIO_EXTENSIONS.some((extension) => lower.endsWith(extension));
-}
-
-function baseName(path: string): string {
-  const parts = path.split("/");
-  return parts[parts.length - 1] ?? path;
-}
-
 onMounted(async () => {
   await device.initialize();
   await models.initialize();
@@ -37,20 +25,10 @@ onMounted(async () => {
   await getCurrentWebview().onDragDropEvent(async (event) => {
     if (event.payload.type !== "drop") return;
 
-    const paths = event.payload.paths.filter(isAudio);
-    if (paths.length === 0) return;
-
-    for (const path of paths) {
-      await projects.addRecording({
-        file_name: baseName(path),
-        source_path: path,
-        project_id: projects.activeProjectId,
-        audio_duration_secs: null,
-      });
+    const added = await projects.addRecordingsFromPaths(event.payload.paths);
+    if (added > 0) {
+      ui.setView("workspace");
     }
-
-    await projects.loadProjects();
-    ui.setView("workspace");
   });
 });
 </script>
