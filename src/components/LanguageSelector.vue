@@ -26,7 +26,7 @@ const selected = computed({
 <template>
   <label class="flex flex-col gap-1">
     <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-      🌐 {{ t("language.ui") }}
+      <i class="fa-solid fa-globe mr-1"></i>{{ t("language.ui") }}
     </span>
     <select
       v-model="selected"

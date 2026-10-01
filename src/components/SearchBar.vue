@@ -7,8 +7,8 @@ const query = defineModel<string>({ default: "" });
 
 <template>
   <div class="relative">
-    <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-base-500">
-      🔍
+    <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-base-500">
+      <i class="fa-solid fa-magnifying-glass"></i>
     </span>
     <input
       v-model="query"

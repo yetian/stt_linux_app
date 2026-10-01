@@ -27,17 +27,17 @@ onBeforeUnmount(() => {
 });
 
 const navItems: { view: AppView; labelKey: string; icon: string }[] = [
-  { view: "workspace", labelKey: "nav.workspace", icon: "🖥️" },
-  { view: "models", labelKey: "nav.models", icon: "🧠" },
-  { view: "settings", labelKey: "nav.settings", icon: "⚙️" },
+  { view: "workspace", labelKey: "nav.workspace", icon: "fa-desktop" },
+  { view: "models", labelKey: "nav.models", icon: "fa-brain" },
+  { view: "settings", labelKey: "nav.settings", icon: "fa-gear" },
 ];
 </script>
 
 <template>
   <aside class="flex flex-col gap-4 border-r border-base-800 bg-base-900 px-4 py-5">
     <div class="flex items-center gap-3">
-      <div class="grid size-9 place-items-center rounded-xl bg-accent-500/15 text-lg leading-none text-accent-400">
-        🎙️
+      <div class="grid size-9 place-items-center rounded-xl bg-accent-500/15 text-accent-400">
+        <i class="fa-solid fa-microphone-lines"></i>
       </div>
       <div class="min-w-0">
         <p class="truncate text-sm font-semibold text-slate-100">{{ t("app.name") }}</p>
@@ -66,7 +66,7 @@ const navItems: { view: AppView; labelKey: string; icon: string }[] = [
         "
         @click="ui.setView(item.view)"
       >
-        <span class="mr-2">{{ item.icon }}</span>{{ t(item.labelKey) }}
+        <i :class="['fa-solid', item.icon, 'mr-2']"></i>{{ t(item.labelKey) }}
       </button>
     </div>
   </aside>

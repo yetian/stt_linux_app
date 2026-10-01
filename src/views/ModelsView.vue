@@ -20,10 +20,16 @@ onMounted(async () => {
 });
 
 const sections = computed(() => [
-  { key: "stt", label: `🗣️ ${t("models.speechModels")}`, items: models.sttModels },
+  {
+    key: "stt",
+    label: t("models.speechModels"),
+    icon: "fa-comment-dots",
+    items: models.sttModels,
+  },
   {
     key: "diarization",
-    label: `👥 ${t("models.speakerModels")}`,
+    label: t("models.speakerModels"),
+    icon: "fa-users",
     items: models.diarizationModels,
   },
 ]);
@@ -36,7 +42,9 @@ function percent(model: ModelStatus): number {
 <template>
   <div class="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-6">
     <header>
-      <h1 class="text-lg font-semibold text-slate-100">🧠 {{ t("models.title") }}</h1>
+      <h1 class="text-lg font-semibold text-slate-100">
+        <i class="fa-solid fa-brain mr-1 text-accent-400"></i>{{ t("models.title") }}
+      </h1>
       <p class="mt-1 text-xs text-base-500">{{ t("models.subtitle") }}</p>
       <p v-if="directory" class="mt-2 font-mono text-[11px] text-base-600">
         {{ t("models.directory") }}: {{ directory }}
@@ -49,7 +57,7 @@ function percent(model: ModelStatus): number {
       class="flex flex-col gap-3"
     >
       <h2 class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-        {{ section.label }}
+        <i :class="['fa-solid', section.icon, 'mr-1']"></i>{{ section.label }}
       </h2>
 
       <article
@@ -74,7 +82,7 @@ function percent(model: ModelStatus): number {
               :disabled="models.isDownloading(model.filename)"
               @click="models.download(model)"
             >
-              ⬇️ {{ t("models.download") }}
+              <i class="fa-solid fa-download mr-1"></i>{{ t("models.download") }}
             </button>
             <button
               v-else
@@ -82,7 +90,7 @@ function percent(model: ModelStatus): number {
               class="rounded-lg border border-base-700 bg-base-850 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-rose-500 hover:text-rose-400"
               @click="models.remove(model)"
             >
-              🗑️ {{ t("models.delete") }}
+              <i class="fa-solid fa-trash mr-1"></i>{{ t("models.delete") }}
             </button>
           </div>
         </div>

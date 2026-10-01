@@ -24,7 +24,7 @@ function select(recordingId: string): void {
 <template>
   <div class="flex flex-col gap-1">
     <span class="px-1 pb-1 text-[11px] font-medium tracking-wide text-base-500 uppercase">
-      🎧 {{ t("nav.recordings") }}
+      <i class="fa-solid fa-headphones mr-1"></i>{{ t("nav.recordings") }}
     </span>
 
     <p v-if="projects.recordings.length === 0" class="px-3 py-2 text-xs text-base-500">

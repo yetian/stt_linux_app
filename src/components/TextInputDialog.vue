@@ -43,7 +43,9 @@ function submit(): void {
       @click.self="emit('cancel')"
     >
       <div class="w-full max-w-sm rounded-2xl border border-base-700 bg-base-900 p-5 shadow-2xl">
-        <h3 class="text-base font-semibold text-slate-100">✏️ {{ props.title }}</h3>
+        <h3 class="text-base font-semibold text-slate-100">
+          <i class="fa-solid fa-pen mr-1 text-accent-400"></i>{{ props.title }}
+        </h3>
         <label class="mt-4 flex flex-col gap-1">
           <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
             {{ props.label }}

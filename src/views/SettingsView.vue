@@ -24,14 +24,16 @@ function onProvider(event: Event): void {
 
 <template>
   <div class="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-6">
-    <h1 class="text-lg font-semibold text-slate-100">⚙️ {{ t("nav.settings") }}</h1>
+    <h1 class="text-lg font-semibold text-slate-100">
+      <i class="fa-solid fa-gear mr-1 text-accent-400"></i>{{ t("nav.settings") }}
+    </h1>
 
     <section class="flex flex-col gap-4 rounded-2xl border border-base-800 bg-base-900 p-5">
       <LanguageSelector />
 
       <label class="flex flex-col gap-1">
         <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-          🎧 {{ t("language.audio") }}
+          <i class="fa-solid fa-headphones mr-1"></i>{{ t("language.audio") }}
         </span>
         <select
           :value="settings.audioLanguage"
@@ -46,7 +48,7 @@ function onProvider(event: Event): void {
 
       <label class="flex flex-col gap-1">
         <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-          📄 {{ t("language.output") }}
+          <i class="fa-solid fa-file-lines mr-1"></i>{{ t("language.output") }}
         </span>
         <input
           v-model="settings.outputLanguage"
@@ -59,7 +61,7 @@ function onProvider(event: Event): void {
     <section class="flex flex-col gap-4 rounded-2xl border border-base-800 bg-base-900 p-5">
       <label class="flex flex-col gap-1">
         <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-          🤖 {{ t("settings.provider") }}
+          <i class="fa-solid fa-robot mr-1"></i>{{ t("settings.provider") }}
         </span>
         <select
           :value="settings.summaryProvider"
@@ -74,7 +76,7 @@ function onProvider(event: Event): void {
 
       <label class="flex flex-col gap-1">
         <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-          🔗 {{ t("settings.ollamaEndpoint") }}
+          <i class="fa-solid fa-link mr-1"></i>{{ t("settings.ollamaEndpoint") }}
         </span>
         <input
           v-model="settings.ollamaEndpoint"
@@ -85,7 +87,7 @@ function onProvider(event: Event): void {
 
       <label class="flex flex-col gap-1">
         <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-          🔗 {{ t("settings.openaiEndpoint") }}
+          <i class="fa-solid fa-link mr-1"></i>{{ t("settings.openaiEndpoint") }}
         </span>
         <input
           v-model="settings.openaiEndpoint"
@@ -96,7 +98,7 @@ function onProvider(event: Event): void {
 
       <label class="flex flex-col gap-1">
         <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-          🧩 {{ t("settings.model") }}
+          <i class="fa-solid fa-puzzle-piece mr-1"></i>{{ t("settings.model") }}
         </span>
         <input
           v-model="settings.ollamaModel"

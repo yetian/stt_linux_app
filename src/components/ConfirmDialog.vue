@@ -21,7 +21,9 @@ const { t } = useI18n();
       @click.self="emit('cancel')"
     >
       <div class="w-full max-w-sm rounded-2xl border border-base-700 bg-base-900 p-5 shadow-2xl">
-        <h3 class="text-base font-semibold text-slate-100">⚠️ {{ props.title }}</h3>
+        <h3 class="text-base font-semibold text-slate-100">
+          <i class="fa-solid fa-triangle-exclamation mr-1 text-amber-400"></i>{{ props.title }}
+        </h3>
         <p class="mt-2 text-sm leading-relaxed text-slate-400">{{ props.message }}</p>
         <div class="mt-5 flex justify-end gap-2">
           <button

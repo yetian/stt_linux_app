@@ -59,8 +59,8 @@ function formatTime(milliseconds: number): string {
 
   <div v-else class="grid place-items-center rounded-2xl border border-base-800 bg-base-900 px-6 py-16 text-center">
     <div class="max-w-sm">
-      <div class="mx-auto grid size-12 place-items-center rounded-full bg-base-800 text-xl leading-none">
-        💬
+      <div class="mx-auto grid size-12 place-items-center rounded-full bg-base-800 text-base-500">
+        <i class="fa-solid fa-comments"></i>
       </div>
       <p class="mt-4 text-sm font-medium text-slate-300">{{ t("transcript.empty") }}</p>
       <p class="mt-1 text-xs text-base-500">{{ t("transcript.emptyHint") }}</p>

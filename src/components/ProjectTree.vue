@@ -52,7 +52,7 @@ async function confirmDelete(): Promise<void> {
   <div class="flex flex-col gap-1">
     <div class="flex items-center justify-between px-1 pb-1">
       <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-        📁 {{ t("nav.projects") }}
+        <i class="fa-solid fa-folder-open mr-1"></i>{{ t("nav.projects") }}
       </span>
       <button
         type="button"
@@ -60,7 +60,7 @@ async function confirmDelete(): Promise<void> {
         :title="t('projects.new')"
         @click="startCreate"
       >
-        ➕
+        <i class="fa-solid fa-plus"></i>
       </button>
     </div>
 
@@ -87,7 +87,7 @@ async function confirmDelete(): Promise<void> {
       "
       @click="projects.selectProject(null)"
     >
-      <span class="truncate">🗂️ {{ t("nav.allRecordings") }}</span>
+      <span class="truncate"><i class="fa-solid fa-layer-group mr-1"></i>{{ t("nav.allRecordings") }}</span>
       <span class="ml-2 font-mono text-[11px] text-base-500">
         {{ projects.totalRecordings }}
       </span>
@@ -108,7 +108,7 @@ async function confirmDelete(): Promise<void> {
       "
       @click="projects.selectProject(project.id)"
     >
-      <span class="truncate">📁 {{ project.name }}</span>
+      <span class="truncate"><i class="fa-solid fa-folder mr-1"></i>{{ project.name }}</span>
       <span class="flex shrink-0 items-center gap-1">
         <button
           type="button"
@@ -116,7 +116,7 @@ async function confirmDelete(): Promise<void> {
           :title="t('projects.renameTitle')"
           @click.stop="renameTarget = project"
         >
-          ✏️
+          <i class="fa-solid fa-pen"></i>
         </button>
         <button
           type="button"
@@ -124,7 +124,7 @@ async function confirmDelete(): Promise<void> {
           :title="t('projects.deleteTitle')"
           @click.stop="deleteTarget = project"
         >
-          🗑️
+          <i class="fa-solid fa-trash"></i>
         </button>
         <span class="ml-1 font-mono text-[11px] text-base-500">
           {{ project.recording_count }}

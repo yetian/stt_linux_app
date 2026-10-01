@@ -23,7 +23,7 @@ const projects = useProjectsStore();
 const settings = useSettingsStore();
 const models = useModelsStore();
 
-const TAB_ICONS = { summary: "📄", transcript: "💬" } as const;
+const TAB_ICONS = { summary: "fa-file-lines", transcript: "fa-comments" } as const;
 
 const activeTab = ref<"summary" | "transcript">("summary");
 const segments = ref<TranscriptSegment[]>([]);
@@ -176,7 +176,9 @@ async function removeTag(tagId: number): Promise<void> {
       class="grid place-items-center rounded-2xl border border-base-800 bg-base-900 px-6 py-16 text-center"
     >
       <div class="max-w-sm">
-        <p class="text-sm font-medium text-slate-300">🎙️ {{ t("workspace.selectRecording") }}</p>
+        <p class="text-sm font-medium text-slate-300">
+          <i class="fa-solid fa-microphone mr-1"></i>{{ t("workspace.selectRecording") }}
+        </p>
         <p class="mt-1 text-xs text-base-500">{{ t("workspace.selectRecordingHint") }}</p>
       </div>
     </section>
@@ -186,7 +188,7 @@ async function removeTag(tagId: number): Promise<void> {
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex min-w-0 items-center gap-2">
             <p class="truncate text-sm font-semibold text-slate-100">
-              🎵 {{ recording.file_name }}
+              <i class="fa-solid fa-music mr-1 text-base-500"></i>{{ recording.file_name }}
             </p>
             <button
               type="button"
@@ -194,7 +196,7 @@ async function removeTag(tagId: number): Promise<void> {
               :title="t('recordings.renameTitle')"
               @click="renameOpen = true"
             >
-              ✏️
+              <i class="fa-solid fa-pen"></i>
             </button>
             <button
               type="button"
@@ -202,7 +204,7 @@ async function removeTag(tagId: number): Promise<void> {
               :title="t('recordings.deleteTitle')"
               @click="deleteOpen = true"
             >
-              🗑️
+              <i class="fa-solid fa-trash"></i>
             </button>
           </div>
           <div class="flex flex-wrap items-center gap-2">
@@ -212,7 +214,7 @@ async function removeTag(tagId: number): Promise<void> {
               :disabled="!canTranscribe || pipeline.isRunning"
               @click="runTranscribe"
             >
-              📝 {{ t("actions.transcribe") }}
+              <i class="fa-solid fa-file-pen mr-1"></i>{{ t("actions.transcribe") }}
             </button>
             <button
               type="button"
@@ -220,7 +222,7 @@ async function removeTag(tagId: number): Promise<void> {
               :disabled="!canDiarize || pipeline.isRunning"
               @click="runDiarize"
             >
-              👥 {{ t("actions.diarize") }}
+              <i class="fa-solid fa-users mr-1"></i>{{ t("actions.diarize") }}
             </button>
             <button
               type="button"
@@ -228,7 +230,7 @@ async function removeTag(tagId: number): Promise<void> {
               :disabled="pipeline.isRunning"
               @click="runSummarize"
             >
-              ✨ {{ t("actions.summarize") }}
+              <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>{{ t("actions.summarize") }}
             </button>
             <button
               type="button"
@@ -236,7 +238,7 @@ async function removeTag(tagId: number): Promise<void> {
               :disabled="exporting"
               @click="runExport"
             >
-              💾 {{ t("actions.export") }}
+              <i class="fa-solid fa-floppy-disk mr-1"></i>{{ t("actions.export") }}
             </button>
           </div>
         </div>
@@ -245,7 +247,7 @@ async function removeTag(tagId: number): Promise<void> {
 
         <div class="flex flex-wrap items-center gap-4">
           <label class="flex items-center gap-2 text-xs text-base-500">
-            <span>📂 {{ t("recordings.moveTo") }}</span>
+            <span><i class="fa-solid fa-folder mr-1"></i>{{ t("recordings.moveTo") }}</span>
             <select
               :value="recording.project_id ?? ''"
               class="rounded-lg border border-base-700 bg-base-850 px-2 py-1 text-xs text-slate-200 outline-none focus:border-accent-500"
@@ -259,7 +261,7 @@ async function removeTag(tagId: number): Promise<void> {
           </label>
 
           <div class="flex flex-wrap items-center gap-2">
-            <span class="text-xs text-base-500">🏷️</span>
+            <span class="text-xs text-base-500"><i class="fa-solid fa-tags"></i></span>
             <span
               v-for="tag in tags"
               :key="tag.id"
@@ -271,7 +273,7 @@ async function removeTag(tagId: number): Promise<void> {
                 class="text-base-500 transition-colors hover:text-rose-400"
                 @click="removeTag(tag.id)"
               >
-                ✕
+                <i class="fa-solid fa-xmark"></i>
               </button>
             </span>
             <input
@@ -287,7 +289,7 @@ async function removeTag(tagId: number): Promise<void> {
               :title="t('recordings.addTag')"
               @click="submitTag"
             >
-              ➕
+              <i class="fa-solid fa-plus"></i>
             </button>
           </div>
         </div>
@@ -307,7 +309,7 @@ async function removeTag(tagId: number): Promise<void> {
             "
             @click="activeTab = tab"
           >
-            {{ TAB_ICONS[tab] }} {{ t(`tabs.${tab}`) }}
+            <i :class="['fa-solid', TAB_ICONS[tab], 'mr-1']"></i>{{ t(`tabs.${tab}`) }}
           </button>
         </div>
 
