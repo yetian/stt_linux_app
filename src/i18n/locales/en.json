@@ -57,7 +57,15 @@
     "clustering": "Speaker clustering",
     "summarizing": "Summarizing",
     "completed": "Completed",
-    "failed": "Failed"
+    "failed": "Failed",
+    "elapsed": "Elapsed",
+    "eta": "ETA",
+    "calculating": "Calculating…",
+    "stepVad": "Voice activity detection",
+    "stepEmbedding": "Speaker embeddings",
+    "stepClustering": "Clustering speakers",
+    "stepConnecting": "Connecting to model",
+    "stepGenerating": "Generating summary"
   },
   "tabs": {
     "summary": "Summary Report",

@@ -24,13 +24,27 @@ pub struct DiarizedSegment {
     pub text: String,
 }
 
-pub fn diarize(
+#[derive(Debug, Clone, Copy)]
+pub enum DiarizationPhase {
+    Vad,
+    Embedding,
+    Clustering,
+}
+
+pub fn diarize<F>(
     samples: &[f32],
     sample_rate: u32,
     model_path: &Path,
     threshold: f32,
-) -> AppResult<Vec<SpeakerTurn>> {
+    mut on_progress: F,
+) -> AppResult<Vec<SpeakerTurn>>
+where
+    F: FnMut(DiarizationPhase, f32),
+{
+    on_progress(DiarizationPhase::Vad, 0.0);
     let intervals = vad::detect_speech(samples, sample_rate);
+    on_progress(DiarizationPhase::Vad, 1.0);
+
     if intervals.is_empty() {
         return Ok(Vec::new());
     }
@@ -38,30 +52,34 @@ pub fn diarize(
     let fbank = Fbank::new(sample_rate);
     let mut embedder = SpeakerEmbedder::load(model_path)?;
 
+    let total = intervals.len();
     let mut embeddings = Vec::new();
     let mut used_intervals = Vec::new();
 
-    for interval in intervals {
+    for (index, interval) in intervals.into_iter().enumerate() {
         let start = ms_to_sample(interval.start_ms, sample_rate);
         let end = ms_to_sample(interval.end_ms, sample_rate).min(samples.len());
-        if end <= start {
-            continue;
+        if end > start {
+            let features = fbank.extract(&samples[start..end]);
+            if !features.is_empty() {
+                embeddings.push(embedder.embed(&features)?);
+                used_intervals.push(interval);
+            }
         }
 
-        let features = fbank.extract(&samples[start..end]);
-        if features.is_empty() {
-            continue;
-        }
-
-        embeddings.push(embedder.embed(&features)?);
-        used_intervals.push(interval);
+        on_progress(
+            DiarizationPhase::Embedding,
+            (index + 1) as f32 / total as f32,
+        );
     }
 
     if embeddings.is_empty() {
         return Ok(Vec::new());
     }
 
+    on_progress(DiarizationPhase::Clustering, 0.0);
     let labels = cluster::cluster(&embeddings, threshold);
+    on_progress(DiarizationPhase::Clustering, 1.0);
 
     Ok(used_intervals
         .into_iter()

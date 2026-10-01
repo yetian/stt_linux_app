@@ -38,12 +38,16 @@ impl WhisperEngine {
         Ok(Self { context })
     }
 
-    pub fn transcribe(
+    pub fn transcribe<F>(
         &self,
         samples: &[f32],
         language: Option<&str>,
         translate: bool,
-    ) -> AppResult<Vec<TranscriptSegment>> {
+        on_progress: F,
+    ) -> AppResult<Vec<TranscriptSegment>>
+    where
+        F: FnMut(i32) + 'static,
+    {
         let mut state = self
             .context
             .create_state()
@@ -57,6 +61,7 @@ impl WhisperEngine {
         params.set_print_realtime(false);
         params.set_print_timestamps(false);
         params.set_n_threads(thread_count());
+        params.set_progress_callback_safe(on_progress);
 
         state
             .full(params, samples)

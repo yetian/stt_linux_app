@@ -6,10 +6,11 @@ use tauri::{AppHandle, State};
 
 use crate::audio::decoder;
 use crate::db::project_manager as pm;
-use crate::diarization::{self, DiarizedSegment, SpeakerTurn};
+use crate::diarization::{self, DiarizationPhase, DiarizedSegment, SpeakerTurn};
 use crate::error::{AppError, AppResult};
 use crate::llm::{self, SummarizeOptions, SummaryProvider};
 use crate::models::{NewRecording, Project, Recording, Tag};
+use crate::progress;
 use crate::services::model_downloader::{self, ModelStatus};
 use crate::stt::{self, TranscriptSegment, WhisperEngine};
 
@@ -199,6 +200,7 @@ pub async fn summarize_text(
 
 #[tauri::command]
 pub async fn summarize_recording(
+    app: AppHandle,
     state: State<'_, AppState>,
     recording_id: String,
     provider: SummaryProvider,
@@ -220,6 +222,9 @@ pub async fn summarize_recording(
         model,
         target_language,
     };
+
+    progress::emit(&app, &recording_id, "summarizing", Some("connecting"), None);
+    progress::emit(&app, &recording_id, "summarizing", Some("generating"), None);
     let summary = llm::summarize(&transcript, &options).await?;
 
     {
@@ -241,6 +246,7 @@ pub async fn list_llm_models(
 
 #[tauri::command]
 pub async fn transcribe_recording(
+    app: AppHandle,
     state: State<'_, AppState>,
     recording_id: String,
     model_path: String,
@@ -260,13 +266,26 @@ pub async fn transcribe_recording(
     let translate = translate.unwrap_or(false);
     let language = language.filter(|value| !value.trim().is_empty() && value != "auto");
 
+    let job_id = recording_id.clone();
     let task = tauri::async_runtime::spawn_blocking(
         move || -> AppResult<(Vec<TranscriptSegment>, f64, String)> {
+            progress::emit(&app, &job_id, "decoding", None, Some(0.0));
             let samples = decoder::decode_to_mono_16k(Path::new(&source_path))?;
             let duration = samples.len() as f64 / f64::from(decoder::TARGET_SAMPLE_RATE);
+            progress::emit(&app, &job_id, "decoding", None, Some(1.0));
 
             let engine = WhisperEngine::load(Path::new(&model_path))?;
-            let segments = engine.transcribe(&samples, language.as_deref(), translate)?;
+            let progress_app = app.clone();
+            let progress_id = job_id.clone();
+            let segments = engine.transcribe(&samples, language.as_deref(), translate, move |value| {
+                progress::emit(
+                    &progress_app,
+                    &progress_id,
+                    "transcribing",
+                    None,
+                    Some(value as f32 / 100.0),
+                );
+            })?;
             let transcript = stt::format_transcript(&segments);
 
             Ok((segments, duration, transcript))
@@ -300,6 +319,7 @@ pub async fn transcribe_recording(
 
 #[tauri::command]
 pub async fn diarize_recording(
+    app: AppHandle,
     state: State<'_, AppState>,
     recording_id: String,
     embedding_model_path: String,
@@ -322,13 +342,25 @@ pub async fn diarize_recording(
 
     let threshold = threshold.unwrap_or(0.35);
 
+    let job_id = recording_id.clone();
     let task = tauri::async_runtime::spawn_blocking(move || -> AppResult<Vec<SpeakerTurn>> {
+        progress::emit(&app, &job_id, "decoding", None, Some(0.0));
         let samples = decoder::decode_to_mono_16k(Path::new(&source_path))?;
+        progress::emit(&app, &job_id, "decoding", None, Some(1.0));
+
         diarization::diarize(
             &samples,
             decoder::TARGET_SAMPLE_RATE,
             Path::new(&embedding_model_path),
             threshold,
+            |phase, fraction| {
+                let step = match phase {
+                    DiarizationPhase::Vad => "vad",
+                    DiarizationPhase::Embedding => "embedding",
+                    DiarizationPhase::Clustering => "clustering",
+                };
+                progress::emit(&app, &job_id, "clustering", Some(step), Some(fraction));
+            },
         )
     })
     .await

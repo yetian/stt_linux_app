@@ -57,7 +57,15 @@
     "clustering": "说话人聚类",
     "summarizing": "生成摘要",
     "completed": "已完成",
-    "failed": "失败"
+    "failed": "失败",
+    "elapsed": "已用时",
+    "eta": "预计剩余",
+    "calculating": "计算中…",
+    "stepVad": "语音活动检测",
+    "stepEmbedding": "提取说话人特征",
+    "stepClustering": "说话人聚类",
+    "stepConnecting": "连接模型",
+    "stepGenerating": "生成摘要"
   },
   "tabs": {
     "summary": "摘要报告",

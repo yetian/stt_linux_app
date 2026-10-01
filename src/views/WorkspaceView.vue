@@ -68,9 +68,7 @@ async function runTranscribe(): Promise<void> {
   const model = models.downloadedStt;
   if (!current || !model) return;
 
-  pipeline.currentFile = current.file_name;
-  pipeline.setProgress(10);
-  pipeline.setStage("transcribing");
+  pipeline.begin(current.id, current.file_name);
 
   try {
     segments.value = await sttApi.transcribe(
@@ -79,9 +77,8 @@ async function runTranscribe(): Promise<void> {
       settings.audioLanguage,
     );
     diarized.value = [];
-    pipeline.setProgress(45);
     await projects.loadRecordings();
-    pipeline.setStage("idle");
+    pipeline.succeed();
   } catch (cause) {
     pipeline.fail(String(cause));
   }
@@ -92,8 +89,7 @@ async function runDiarize(): Promise<void> {
   const model = models.downloadedDiarization;
   if (!current || !model) return;
 
-  pipeline.setStage("clustering");
-  pipeline.setProgress(65);
+  pipeline.begin(current.id, current.file_name);
 
   try {
     diarized.value = await diarizationApi.diarize(
@@ -101,9 +97,8 @@ async function runDiarize(): Promise<void> {
       model.path,
       segments.value.length > 0 ? segments.value : null,
     );
-    pipeline.setProgress(80);
     await projects.loadRecordings();
-    pipeline.setStage("idle");
+    pipeline.succeed();
   } catch (cause) {
     pipeline.fail(String(cause));
   }
@@ -113,8 +108,7 @@ async function runSummarize(): Promise<void> {
   const current = recording.value;
   if (!current) return;
 
-  pipeline.setStage("summarizing");
-  pipeline.setProgress(88);
+  pipeline.begin(current.id, current.file_name);
 
   try {
     await llmApi.summarizeRecording(current.id, {
@@ -123,9 +117,8 @@ async function runSummarize(): Promise<void> {
       model: settings.activeModel,
       targetLanguage: settings.outputLanguage,
     });
-    pipeline.setProgress(100);
     await projects.loadRecordings();
-    pipeline.setStage("idle");
+    pipeline.succeed();
   } catch (cause) {
     pipeline.fail(String(cause));
   }

@@ -18,6 +18,9 @@ Everything runs on your machine. No audio, transcript, or summary ever leaves th
 - **Project workspace** — embedded SQLite for projects, recordings, statuses, and tags.
 - **Full lifecycle** — create, rename, move, tag, and delete projects and recordings, with a
   confirmation dialog for destructive actions.
+- **Live progress** — backend `pipeline-progress` events drive per-stage progress with elapsed time
+  and an ETA for transcription, diarization, and summarization (plus sub-steps such as VAD,
+  embeddings, clustering, connecting, generating).
 - **Model manager** — downloads models into a local `models/` folder with live progress.
 - **Export** — writes `<recording>.md` (summary + transcript) to `~/Documents/Recordings_Summary`.
 - **i18n** — English, Simplified Chinese, German UI, switchable at runtime.
@@ -194,6 +197,7 @@ git push origin HEAD
 
 | Version | Changes |
 | --- | --- |
+| 0.1.15 | Live pipeline progress: per-stage/sub-step progress events, elapsed time, and ETA for transcription, diarization, and summarization. |
 | 0.1.14 | Summary: rendered Markdown preview (sanitized) with Preview/Markdown toggle and "Copy as Markdown". |
 | 0.1.13 | Settings: staged model configuration with a confirmation popup, provider connection test, and a model list fetched from the running Ollama / LM Studio server. |
 | 0.1.12 | Transcript segments persisted; "Identify speakers" enabled when a transcript OR file exists; compact elegant dropdowns. |

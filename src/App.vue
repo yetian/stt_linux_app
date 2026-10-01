@@ -8,17 +8,20 @@ import SettingsView from "@/views/SettingsView.vue";
 import WorkspaceView from "@/views/WorkspaceView.vue";
 import { useDeviceStore } from "@/stores/device";
 import { useModelsStore } from "@/stores/models";
+import { usePipelineStore } from "@/stores/pipeline";
 import { useProjectsStore } from "@/stores/projects";
 import { useUiStore } from "@/stores/ui";
 
 const projects = useProjectsStore();
 const device = useDeviceStore();
 const models = useModelsStore();
+const pipeline = usePipelineStore();
 const ui = useUiStore();
 
 onMounted(async () => {
   await device.initialize();
   await models.initialize();
+  await pipeline.initialize();
   await projects.loadProjects();
   await projects.loadRecordings();
 

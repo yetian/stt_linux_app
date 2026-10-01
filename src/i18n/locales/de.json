@@ -57,7 +57,15 @@
     "clustering": "Sprecher-Clustering",
     "summarizing": "Zusammenfassung",
     "completed": "Abgeschlossen",
-    "failed": "Fehlgeschlagen"
+    "failed": "Fehlgeschlagen",
+    "elapsed": "Vergangen",
+    "eta": "Verbleibend",
+    "calculating": "Wird berechnet…",
+    "stepVad": "Sprachaktivitätserkennung",
+    "stepEmbedding": "Sprecher-Embeddings",
+    "stepClustering": "Sprecher gruppieren",
+    "stepConnecting": "Verbindung zum Modell",
+    "stepGenerating": "Zusammenfassung erstellen"
   },
   "tabs": {
     "summary": "Zusammenfassung",

@@ -6,6 +6,7 @@ mod error;
 mod llm;
 mod models;
 mod paths;
+mod progress;
 mod services;
 mod stt;
 
