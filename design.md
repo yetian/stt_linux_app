@@ -212,7 +212,8 @@ Applications will **not** bundle large model files inside installation packages.
 - **Dropzone**: Drag-and-drop external audio files or click USB files to queue.
 - **Processing Timeline**: Visual status `[1/4] Decoding -> [2/4] STT Transcribing -> [3/4] Speaker Clustering -> [4/4] LLM Summarizing`.
 - **Dual Tab View**:
-  - *Tab 1: Summary Report* (Rich Markdown Viewer + Action Items).
+  - *Tab 1: Summary Report* (rendered Markdown preview via `marked` + `DOMPurify`, a raw Markdown
+    toggle, and "Copy as Markdown").
   - *Tab 2: Interactive Transcript Timeline* (Audio player synchronized with highlighted speaker speech bubbles).
 
 4. **Project Management Drawer**:

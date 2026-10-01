@@ -65,7 +65,11 @@
   },
   "summary": {
     "empty": "No summary generated yet.",
-    "emptyHint": "Process a recording to generate a structured Markdown summary."
+    "emptyHint": "Process a recording to generate a structured Markdown summary.",
+    "preview": "Preview",
+    "markdown": "Markdown",
+    "copy": "Copy as Markdown",
+    "copied": "Copied"
   },
   "transcript": {
     "empty": "No transcript available yet.",

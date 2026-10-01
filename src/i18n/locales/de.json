@@ -65,7 +65,11 @@
   },
   "summary": {
     "empty": "Noch keine Zusammenfassung erstellt.",
-    "emptyHint": "Verarbeiten Sie eine Aufnahme, um eine Markdown-Zusammenfassung zu erstellen."
+    "emptyHint": "Verarbeiten Sie eine Aufnahme, um eine Markdown-Zusammenfassung zu erstellen.",
+    "preview": "Vorschau",
+    "markdown": "Markdown",
+    "copy": "Als Markdown kopieren",
+    "copied": "Kopiert"
   },
   "transcript": {
     "empty": "Noch kein Transkript verfügbar.",

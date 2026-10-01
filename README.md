@@ -30,6 +30,7 @@ Everything runs on your machine. No audio, transcript, or summary ever leaves th
 | --- | --- |
 | Shell | Tauri 2 (Rust backend, WebView UI) |
 | Frontend | Vue 3 + TypeScript + Vite + Tailwind CSS v4 + Pinia + vue-i18n + Font Awesome |
+| Markdown | `marked` + `DOMPurify` + `@tailwindcss/typography` |
 | STT | `whisper-rs` (whisper.cpp, CUDA) |
 | Diarization | `ort` (ONNX Runtime, CUDA) + `rustfft` |
 | Audio | `symphonia` |
@@ -193,6 +194,7 @@ git push origin HEAD
 
 | Version | Changes |
 | --- | --- |
+| 0.1.14 | Summary: rendered Markdown preview (sanitized) with Preview/Markdown toggle and "Copy as Markdown". |
 | 0.1.13 | Settings: staged model configuration with a confirmation popup, provider connection test, and a model list fetched from the running Ollama / LM Studio server. |
 | 0.1.12 | Transcript segments persisted; "Identify speakers" enabled when a transcript OR file exists; compact elegant dropdowns. |
 | 0.1.11 | Workspace fills the viewport; the transcript/summary panel scrolls internally. |

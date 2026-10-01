@@ -65,7 +65,11 @@
   },
   "summary": {
     "empty": "尚未生成摘要。",
-    "emptyHint": "处理录音后即可生成结构化的 Markdown 摘要。"
+    "emptyHint": "处理录音后即可生成结构化的 Markdown 摘要。",
+    "preview": "预览",
+    "markdown": "Markdown",
+    "copy": "复制为 Markdown",
+    "copied": "已复制"
   },
   "transcript": {
     "empty": "暂无转写内容。",
