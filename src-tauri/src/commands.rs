@@ -460,6 +460,11 @@ pub fn list_models() -> Vec<ModelStatus> {
 }
 
 #[tauri::command]
+pub fn get_gpu_info() -> Option<crate::services::system_info::GpuInfo> {
+    crate::services::system_info::gpu_info()
+}
+
+#[tauri::command]
 pub async fn download_model(app: AppHandle, url: String, filename: String) -> AppResult<String> {
     model_downloader::download(&app, &url, &filename).await
 }

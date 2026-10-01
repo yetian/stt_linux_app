@@ -213,7 +213,7 @@ Applications will **not** bundle large model files inside installation packages.
 
 2. **Top Header**:
 - Device status indicator (`USB Recorder Connected: /media/user/RECORDER` / `No Device`).
-- Real-time VRAM/GPU performance widget.
+- GPU indicator showing the detected GPU name and total VRAM (via `get_gpu_info` → `nvidia-smi`).
 
 3. **Center Main Panel**:
 - **Dropzone**: Drag-and-drop external audio files or click USB files to queue.

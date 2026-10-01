@@ -80,6 +80,11 @@ export interface Tag {
   tag_name: string;
 }
 
+export interface GpuInfo {
+  name: string;
+  vram_mb: number;
+}
+
 export interface AppPaths {
   config_dir: string;
   data_dir: string;

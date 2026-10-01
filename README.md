@@ -148,6 +148,7 @@ stt_app/
 | Command | Description |
 | --- | --- |
 | `get_app_paths` | Resolve config, data, models, and output directories |
+| `get_gpu_info` | GPU name and total VRAM (via `nvidia-smi`) |
 | `get_connected_device` | Current recorder mount and audio files |
 | `create_project` / `list_projects` / `rename_project` / `delete_project` | Project management |
 | `add_recording` / `list_recordings` / `rename_recording` / `delete_recording` | Recording management |
@@ -199,6 +200,7 @@ git push origin HEAD
 
 | Version | Changes |
 | --- | --- |
+| 0.1.20 | Header GPU widget simplified to the detected GPU name and total VRAM (live values from `get_gpu_info`); usage bar removed. |
 | 0.1.19 | Full-screen toggle for the transcript/summary panel (expand icon, Esc to exit). |
 | 0.1.18 | Fix UI freeze during transcription: Whisper's C progress callback now only records an atomic, which a polling task reads to emit events (no Tauri API calls from the callback thread). |
 | 0.1.17 | Progress accuracy: model-load time is reported as Transcribing/"Loading model" instead of Decoding; Whisper progress events are throttled; summarization no longer holds the GPU lock. |

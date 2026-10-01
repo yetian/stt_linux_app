@@ -92,6 +92,7 @@ pub fn run() {
             commands::transcribe_recording,
             commands::diarize_recording,
             commands::list_models,
+            commands::get_gpu_info,
             commands::download_model,
             commands::delete_model,
             commands::export_recording,
