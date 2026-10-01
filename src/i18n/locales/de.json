@@ -111,7 +111,9 @@
   },
   "workspace": {
     "selectRecording": "Keine Aufnahme ausgewählt",
-    "selectRecordingHint": "Ziehen Sie eine Audiodatei hierher, fügen Sie eine vom Rekorder hinzu oder wählen Sie links eine Aufnahme."
+    "selectRecordingHint": "Ziehen Sie eine Audiodatei hierher, fügen Sie eine vom Rekorder hinzu oder wählen Sie links eine Aufnahme.",
+    "fullscreen": "Vollbild",
+    "exitFullscreen": "Vollbild verlassen"
   },
   "models": {
     "title": "Modelle",

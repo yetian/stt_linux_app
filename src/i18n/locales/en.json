@@ -111,7 +111,9 @@
   },
   "workspace": {
     "selectRecording": "No recording selected",
-    "selectRecordingHint": "Drop an audio file, add one from the connected recorder, or pick a recording from the sidebar."
+    "selectRecordingHint": "Drop an audio file, add one from the connected recorder, or pick a recording from the sidebar.",
+    "fullscreen": "Full screen",
+    "exitFullscreen": "Exit full screen"
   },
   "models": {
     "title": "Models",

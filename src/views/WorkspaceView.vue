@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import Dropzone from "@/components/Dropzone.vue";
@@ -32,6 +32,14 @@ const exporting = ref(false);
 const renameOpen = ref(false);
 const deleteOpen = ref(false);
 const newTag = ref("");
+const fullscreen = ref(false);
+
+function onKeydown(event: KeyboardEvent): void {
+  if (event.key === "Escape") fullscreen.value = false;
+}
+
+onMounted(() => window.addEventListener("keydown", onKeydown));
+onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 
 const recording = computed(() => projects.activeRecording);
 const tags = computed(() =>
@@ -302,21 +310,39 @@ async function removeTag(tagId: number): Promise<void> {
         </div>
       </div>
 
-      <section class="flex min-h-0 flex-1 flex-col rounded-2xl border border-base-800 bg-base-900">
-        <div class="flex shrink-0 items-center gap-1 border-b border-base-800 p-2">
+      <section
+        class="flex min-h-0 flex-1 flex-col bg-base-900"
+        :class="
+          fullscreen
+            ? 'fixed inset-0 z-40 rounded-none'
+            : 'rounded-2xl border border-base-800'
+        "
+      >
+        <div class="flex shrink-0 items-center justify-between gap-1 border-b border-base-800 p-2">
+          <div class="flex items-center gap-1">
+            <button
+              v-for="tab in (['transcript', 'summary'] as const)"
+              :key="tab"
+              type="button"
+              class="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+              :class="
+                activeTab === tab
+                  ? 'bg-base-800 text-slate-100'
+                  : 'text-base-500 hover:text-slate-300'
+              "
+              @click="activeTab = tab"
+            >
+              <i :class="['fa-solid', TAB_ICONS[tab], 'mr-1']"></i>{{ t(`tabs.${tab}`) }}
+            </button>
+          </div>
+
           <button
-            v-for="tab in (['transcript', 'summary'] as const)"
-            :key="tab"
             type="button"
-            class="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-            :class="
-              activeTab === tab
-                ? 'bg-base-800 text-slate-100'
-                : 'text-base-500 hover:text-slate-300'
-            "
-            @click="activeTab = tab"
+            class="rounded-lg px-3 py-2 text-base-500 transition-colors hover:bg-base-800 hover:text-slate-200"
+            :title="fullscreen ? t('workspace.exitFullscreen') : t('workspace.fullscreen')"
+            @click="fullscreen = !fullscreen"
           >
-            <i :class="['fa-solid', TAB_ICONS[tab], 'mr-1']"></i>{{ t(`tabs.${tab}`) }}
+            <i :class="fullscreen ? 'fa-solid fa-compress' : 'fa-solid fa-expand'"></i>
           </button>
         </div>
 
