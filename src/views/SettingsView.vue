@@ -124,6 +124,20 @@ function discardChanges(): void {
   void testConnection();
 }
 
+// Settings are restored asynchronously at startup; keep the staged draft in
+// sync with the store until the user has actually staged their own edits.
+const storedJson = computed(() => JSON.stringify(makeDraft()));
+
+watch(storedJson, () => {
+  if (isDirty.value) return;
+  const previousProvider = draft.provider;
+  const previousEndpoint = draftEndpoint.value;
+  Object.assign(draft, makeDraft());
+  if (draft.provider === previousProvider && draftEndpoint.value !== previousEndpoint) {
+    void testConnection();
+  }
+});
+
 watch(
   () => draft.provider,
   () => {

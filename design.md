@@ -144,6 +144,11 @@ CREATE TABLE IF NOT EXISTS tags (
     tag_name TEXT NOT NULL,
     FOREIGN KEY(recording_id) REFERENCES recordings(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS user_settings (
+    setting_key TEXT PRIMARY KEY,
+    setting_value TEXT NOT NULL
+);
 ```
 
 - Backend Rust Command API:
@@ -152,6 +157,8 @@ CREATE TABLE IF NOT EXISTS tags (
 - `assign_recording_to_project(recording_id, project_id)`
 - `search_recordings(query_keyword, project_id, tag_filter)`
 - `delete_recording(recording_id)`
+- `load_settings()` / `save_settings(settings)` — key/value user settings (summary provider,
+  endpoints, models, languages, GPU toggle). `save_settings` upserts, so partial writes merge.
 
 ---
 
@@ -163,8 +170,22 @@ CREATE TABLE IF NOT EXISTS tags (
 
 ### i18n Architecture (`src/i18n/`)
 - Frontend utilizes `vue-i18n` with local JSON translation bundles (`en.json`, `zh-CN.json`, `de.json`).
-- Language selector dropdown located in the global navigation bar with persistent storage in `localStorage` & SQLite user settings.
+- Language selector dropdown lives in the Settings view; the selected UI locale is persisted (see below).
 - Transmitting target output language parameter to LLM API ensuring generated summaries match user preference.
+
+### Settings Persistence (`src/stores/settings.ts`)
+Settings restore on every launch instead of reverting to hardcoded defaults:
+- **localStorage** (`lra.settings`) is applied synchronously when the store is created, so the UI
+  never flashes Ollama defaults. The UI locale additionally keeps its own `lra.uiLocale` key.
+- **SQLite `user_settings`** is the source of truth. `App.vue` calls `settings.hydrate()` on mount:
+  if the table has rows they are applied over the cache (then re-cached); if it is empty the current
+  snapshot is seeded into SQLite.
+- Every change writes localStorage immediately and invokes `save_settings` (upsert). If a change
+  lands while `hydrate()` is in flight, the cache wins and is written back to SQLite.
+- Persisted keys: `uiLocale`, `audioLanguage`, `outputLanguage`, `summaryProvider`,
+  `ollamaEndpoint`, `openaiEndpoint`, `ollamaModel`, `openaiModel`, `useGpu`.
+- The Settings view stages edits in a `draft`; the draft re-syncs from the store after hydration
+  unless the user has staged unsaved changes of their own.
 
 ---
 

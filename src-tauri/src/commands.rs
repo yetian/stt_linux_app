@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -462,6 +463,21 @@ pub fn list_models() -> Vec<ModelStatus> {
 #[tauri::command]
 pub fn get_gpu_info() -> Option<crate::services::system_info::GpuInfo> {
     crate::services::system_info::gpu_info()
+}
+
+#[tauri::command]
+pub fn load_settings(state: State<'_, AppState>) -> AppResult<BTreeMap<String, String>> {
+    let conn = state.connection();
+    pm::load_settings(&conn)
+}
+
+#[tauri::command]
+pub fn save_settings(
+    state: State<'_, AppState>,
+    settings: BTreeMap<String, String>,
+) -> AppResult<()> {
+    let conn = state.connection();
+    pm::save_settings(&conn, &settings)
 }
 
 #[tauri::command]

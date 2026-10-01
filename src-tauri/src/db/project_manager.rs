@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use rusqlite::{params, Connection};
 use uuid::Uuid;
 
@@ -39,6 +41,11 @@ CREATE TABLE IF NOT EXISTS tags (
 CREATE INDEX IF NOT EXISTS idx_recordings_project ON recordings(project_id);
 CREATE INDEX IF NOT EXISTS idx_recordings_status ON recordings(status);
 CREATE INDEX IF NOT EXISTS idx_tags_recording ON tags(recording_id);
+
+CREATE TABLE IF NOT EXISTS user_settings (
+    setting_key TEXT PRIMARY KEY,
+    setting_value TEXT NOT NULL
+);
 "#;
 
 const PROJECT_COLUMNS: &str = "p.id, p.name, p.description, p.created_at, \
@@ -357,6 +364,32 @@ pub fn delete_tag(conn: &Connection, tag_id: i64) -> AppResult<()> {
     Ok(())
 }
 
+pub fn load_settings(conn: &Connection) -> AppResult<BTreeMap<String, String>> {
+    let mut stmt = conn.prepare("SELECT setting_key, setting_value FROM user_settings")?;
+    let rows = stmt.query_map([], |row| {
+        Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+    })?;
+
+    let mut settings = BTreeMap::new();
+    for row in rows {
+        let (key, value) = row?;
+        settings.insert(key, value);
+    }
+    Ok(settings)
+}
+
+pub fn save_settings(conn: &Connection, settings: &BTreeMap<String, String>) -> AppResult<()> {
+    let mut stmt = conn.prepare(
+        "INSERT INTO user_settings (setting_key, setting_value) VALUES (?1, ?2) \
+         ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value",
+    )?;
+
+    for (key, value) in settings {
+        stmt.execute(params![key, value])?;
+    }
+    Ok(())
+}
+
 fn collect(
     rows: rusqlite::MappedRows<'_, impl FnMut(&rusqlite::Row<'_>) -> rusqlite::Result<Recording>>,
 ) -> AppResult<Vec<Recording>> {
@@ -539,6 +572,31 @@ mod tests {
             get_recording(&conn, &recording.id).unwrap().transcript_segments.as_deref(),
             Some("[]")
         );
+    }
+
+    #[test]
+    fn loads_empty_settings_by_default() {
+        let conn = setup();
+        assert!(load_settings(&conn).unwrap().is_empty());
+    }
+
+    #[test]
+    fn saves_settings_and_merges_updates() {
+        let conn = setup();
+
+        let mut initial = BTreeMap::new();
+        initial.insert("summaryProvider".to_string(), "ollama".to_string());
+        initial.insert("ollamaModel".to_string(), "qwen2.5:14b".to_string());
+        save_settings(&conn, &initial).unwrap();
+
+        let mut update = BTreeMap::new();
+        update.insert("summaryProvider".to_string(), "openai".to_string());
+        save_settings(&conn, &update).unwrap();
+
+        let loaded = load_settings(&conn).unwrap();
+        assert_eq!(loaded.get("summaryProvider").map(String::as_str), Some("openai"));
+        assert_eq!(loaded.get("ollamaModel").map(String::as_str), Some("qwen2.5:14b"));
+        assert_eq!(loaded.len(), 2);
     }
 
     #[test]

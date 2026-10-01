@@ -10,15 +10,18 @@ import { useDeviceStore } from "@/stores/device";
 import { useModelsStore } from "@/stores/models";
 import { usePipelineStore } from "@/stores/pipeline";
 import { useProjectsStore } from "@/stores/projects";
+import { useSettingsStore } from "@/stores/settings";
 import { useUiStore } from "@/stores/ui";
 
 const projects = useProjectsStore();
 const device = useDeviceStore();
 const models = useModelsStore();
 const pipeline = usePipelineStore();
+const settings = useSettingsStore();
 const ui = useUiStore();
 
 onMounted(async () => {
+  await settings.hydrate();
   await device.initialize();
   await models.initialize();
   await pipeline.initialize();

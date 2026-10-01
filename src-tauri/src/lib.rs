@@ -93,6 +93,8 @@ pub fn run() {
             commands::diarize_recording,
             commands::list_models,
             commands::get_gpu_info,
+            commands::load_settings,
+            commands::save_settings,
             commands::download_model,
             commands::delete_model,
             commands::export_recording,
