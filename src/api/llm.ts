@@ -27,6 +27,6 @@ export const llmApi = {
       targetLanguage: params.targetLanguage,
     }),
 
-  listModels: (endpoint: string) =>
-    invoke<LlmModel[]>("list_llm_models", { endpoint }),
+  listModels: (provider: SummaryProvider, endpoint: string) =>
+    invoke<LlmModel[]>("list_llm_models", { provider, endpoint }),
 };

@@ -115,6 +115,18 @@
     "provider": "摘要服务",
     "ollamaEndpoint": "Ollama 接口地址",
     "openaiEndpoint": "OpenAI 兼容接口地址",
-    "model": "模型名称"
+    "model": "模型名称",
+    "connection": "连接状态",
+    "test": "测试",
+    "checking": "检测中…",
+    "online": "在线",
+    "offline": "无法连接",
+    "notChecked": "未检测",
+    "fromServer": "已从运行中的服务获取模型列表",
+    "unsaved": "配置有未保存的更改",
+    "apply": "应用更改",
+    "discard": "放弃",
+    "confirmTitle": "确认应用配置更改？",
+    "confirmMessage": "以下内容将被修改：{fields}"
   }
 }

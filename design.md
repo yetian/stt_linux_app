@@ -90,6 +90,9 @@ v
 ### Module 5: LLM Summarization Client (`src-tauri/src/llm/client.rs`)
 - Sends HTTP POST requests to Ollama API (`http://127.0.0.1:11434/api/generate`) or custom OpenAI endpoints.
 - Dynamically adapts system prompt according to the user's selected UI target language.
+- The Settings panel stages provider/endpoint/model edits, requires confirmation before applying,
+  tests provider reachability, and enumerates models from the running server
+  (Ollama `/api/tags`, OpenAI-compatible `/models`).
 - System Prompt Template (Localized):
   ```text
   You are an expert executive assistant. Summarize the following transcript in {TARGET_LANGUAGE}.

@@ -119,11 +119,8 @@ async function runSummarize(): Promise<void> {
   try {
     await llmApi.summarizeRecording(current.id, {
       provider: settings.summaryProvider,
-      endpoint:
-        settings.summaryProvider === "ollama"
-          ? settings.ollamaEndpoint
-          : settings.openaiEndpoint,
-      model: settings.ollamaModel,
+      endpoint: settings.activeEndpoint,
+      model: settings.activeModel,
       targetLanguage: settings.outputLanguage,
     });
     pipeline.setProgress(100);

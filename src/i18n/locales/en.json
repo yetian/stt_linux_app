@@ -115,6 +115,18 @@
     "provider": "Summary provider",
     "ollamaEndpoint": "Ollama endpoint",
     "openaiEndpoint": "OpenAI-compatible endpoint",
-    "model": "Model name"
+    "model": "Model name",
+    "connection": "Connection",
+    "test": "Test",
+    "checking": "Checking…",
+    "online": "Online",
+    "offline": "Offline",
+    "notChecked": "Not checked",
+    "fromServer": "Loaded from the running server",
+    "unsaved": "You have unsaved configuration changes",
+    "apply": "Apply changes",
+    "discard": "Discard",
+    "confirmTitle": "Apply configuration changes?",
+    "confirmMessage": "The following will change: {fields}"
   }
 }

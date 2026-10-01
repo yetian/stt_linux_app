@@ -232,8 +232,11 @@ pub async fn summarize_recording(
 }
 
 #[tauri::command]
-pub async fn list_llm_models(endpoint: String) -> AppResult<Vec<llm::client::LlmModel>> {
-    llm::client::list_ollama_models(&endpoint).await
+pub async fn list_llm_models(
+    provider: SummaryProvider,
+    endpoint: String,
+) -> AppResult<Vec<llm::client::LlmModel>> {
+    llm::client::list_models(provider, &endpoint).await
 }
 
 #[tauri::command]

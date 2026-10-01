@@ -115,6 +115,18 @@
     "provider": "Zusammenfassungs-Anbieter",
     "ollamaEndpoint": "Ollama-Endpunkt",
     "openaiEndpoint": "OpenAI-kompatibler Endpunkt",
-    "model": "Modellname"
+    "model": "Modellname",
+    "connection": "Verbindung",
+    "test": "Testen",
+    "checking": "Prüfe…",
+    "online": "Online",
+    "offline": "Offline",
+    "notChecked": "Nicht geprüft",
+    "fromServer": "Vom laufenden Server geladen",
+    "unsaved": "Ungespeicherte Konfigurationsänderungen",
+    "apply": "Änderungen anwenden",
+    "discard": "Verwerfen",
+    "confirmTitle": "Konfigurationsänderungen anwenden?",
+    "confirmMessage": "Folgendes wird geändert: {fields}"
   }
 }

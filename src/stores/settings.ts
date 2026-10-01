@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { i18n, setUiLocale, type UiLocale } from "@/i18n";
 import type { SummaryProvider } from "@/types";
 
@@ -29,6 +29,23 @@ export const useSettingsStore = defineStore("settings", () => {
   const ollamaEndpoint = ref("http://127.0.0.1:11434");
   const openaiEndpoint = ref("http://127.0.0.1:1234/v1");
   const ollamaModel = ref("qwen2.5:14b");
+  const openaiModel = ref("");
+
+  const activeEndpoint = computed(() =>
+    summaryProvider.value === "ollama" ? ollamaEndpoint.value : openaiEndpoint.value,
+  );
+
+  const activeModel = computed({
+    get: () =>
+      summaryProvider.value === "ollama" ? ollamaModel.value : openaiModel.value,
+    set: (value: string) => {
+      if (summaryProvider.value === "ollama") {
+        ollamaModel.value = value;
+      } else {
+        openaiModel.value = value;
+      }
+    },
+  });
 
   function setLocale(locale: UiLocale): void {
     uiLocale.value = locale;
@@ -52,6 +69,9 @@ export const useSettingsStore = defineStore("settings", () => {
     ollamaEndpoint,
     openaiEndpoint,
     ollamaModel,
+    openaiModel,
+    activeEndpoint,
+    activeModel,
     setLocale,
     setAudioLanguage,
     setOutputLanguage,

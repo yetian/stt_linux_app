@@ -204,6 +204,48 @@ pub async fn list_ollama_models(endpoint: &str) -> AppResult<Vec<LlmModel>> {
         .collect())
 }
 
+#[derive(Deserialize)]
+struct OpenAiModels {
+    data: Vec<OpenAiModelEntry>,
+}
+
+#[derive(Deserialize)]
+struct OpenAiModelEntry {
+    id: String,
+}
+
+pub async fn list_openai_models(endpoint: &str) -> AppResult<Vec<LlmModel>> {
+    let url = format!("{}/models", normalize(endpoint));
+
+    let response = http_client()?.get(&url).send().await?;
+    let status = response.status();
+    if !status.is_success() {
+        return Err(AppError::msg(format!(
+            "model list request failed with status {status}"
+        )));
+    }
+
+    let body: OpenAiModels = response.json().await?;
+    Ok(body
+        .data
+        .into_iter()
+        .map(|model| LlmModel {
+            name: model.id,
+            size_bytes: 0,
+        })
+        .collect())
+}
+
+pub async fn list_models(
+    provider: SummaryProvider,
+    endpoint: &str,
+) -> AppResult<Vec<LlmModel>> {
+    match provider {
+        SummaryProvider::Ollama => list_ollama_models(endpoint).await,
+        SummaryProvider::Openai => list_openai_models(endpoint).await,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
