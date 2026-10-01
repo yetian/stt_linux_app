@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { nextTick, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
+import TextInputDialog from "@/components/TextInputDialog.vue";
 import { useProjectsStore } from "@/stores/projects";
+import type { Project } from "@/types";
 
 const { t } = useI18n();
 const projects = useProjectsStore();
@@ -9,6 +12,9 @@ const projects = useProjectsStore();
 const creating = ref(false);
 const draftName = ref("");
 const nameInput = ref<HTMLInputElement | null>(null);
+
+const renameTarget = ref<Project | null>(null);
+const deleteTarget = ref<Project | null>(null);
 
 async function startCreate(): Promise<void> {
   creating.value = true;
@@ -27,6 +33,18 @@ async function confirmCreate(): Promise<void> {
 function cancelCreate(): void {
   creating.value = false;
   draftName.value = "";
+}
+
+async function submitRename(name: string): Promise<void> {
+  const target = renameTarget.value;
+  renameTarget.value = null;
+  if (target) await projects.renameProject(target.id, name);
+}
+
+async function confirmDelete(): Promise<void> {
+  const target = deleteTarget.value;
+  deleteTarget.value = null;
+  if (target) await projects.removeProject(target.id);
 }
 </script>
 
@@ -79,11 +97,10 @@ function cancelCreate(): void {
       {{ t("projects.empty") }}
     </p>
 
-    <button
+    <div
       v-for="project in projects.projects"
       :key="project.id"
-      type="button"
-      class="flex items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors"
+      class="group flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors"
       :class="
         projects.activeProjectId === project.id
           ? 'bg-base-800 text-slate-100'
@@ -92,9 +109,51 @@ function cancelCreate(): void {
       @click="projects.selectProject(project.id)"
     >
       <span class="truncate">📁 {{ project.name }}</span>
-      <span class="ml-2 font-mono text-[11px] text-base-500">
-        {{ project.recording_count }}
+      <span class="flex shrink-0 items-center gap-1">
+        <button
+          type="button"
+          class="opacity-0 transition-opacity group-hover:opacity-100 hover:text-accent-400"
+          :title="t('projects.renameTitle')"
+          @click.stop="renameTarget = project"
+        >
+          ✏️
+        </button>
+        <button
+          type="button"
+          class="opacity-0 transition-opacity group-hover:opacity-100 hover:text-rose-400"
+          :title="t('projects.deleteTitle')"
+          @click.stop="deleteTarget = project"
+        >
+          🗑️
+        </button>
+        <span class="ml-1 font-mono text-[11px] text-base-500">
+          {{ project.recording_count }}
+        </span>
       </span>
-    </button>
+    </div>
+
+    <TextInputDialog
+      :open="renameTarget !== null"
+      :title="t('projects.renameTitle')"
+      :label="t('projects.renameLabel')"
+      :initial-value="renameTarget?.name"
+      @confirm="submitRename"
+      @cancel="renameTarget = null"
+    />
+
+    <ConfirmDialog
+      :open="deleteTarget !== null"
+      :title="t('projects.deleteTitle')"
+      :message="
+        t('projects.deleteMessage', {
+          name: deleteTarget?.name,
+          count: deleteTarget?.recording_count ?? 0,
+        })
+      "
+      :confirm-label="t('common.delete')"
+      danger
+      @confirm="confirmDelete"
+      @cancel="deleteTarget = null"
+    />
   </div>
 </template>

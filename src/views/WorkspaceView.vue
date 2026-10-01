@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import Dropzone from "@/components/Dropzone.vue";
 import ProcessingTimeline from "@/components/ProcessingTimeline.vue";
 import SummaryPanel from "@/components/SummaryPanel.vue";
+import TextInputDialog from "@/components/TextInputDialog.vue";
 import TranscriptPanel from "@/components/TranscriptPanel.vue";
 import { diarizationApi } from "@/api/diarization";
 import { llmApi } from "@/api/llm";
@@ -27,11 +29,25 @@ const activeTab = ref<"summary" | "transcript">("summary");
 const segments = ref<TranscriptSegment[]>([]);
 const diarized = ref<DiarizedSegment[]>([]);
 const exporting = ref(false);
+const renameOpen = ref(false);
+const deleteOpen = ref(false);
+const newTag = ref("");
 
 const recording = computed(() => projects.activeRecording);
+const tags = computed(() =>
+  recording.value ? projects.recordingTags(recording.value.id) : [],
+);
 const canTranscribe = computed(() => models.downloadedStt !== null);
 const canDiarize = computed(
   () => models.downloadedDiarization !== null && segments.value.length > 0,
+);
+
+watch(
+  () => recording.value?.id ?? null,
+  (id) => {
+    if (id) void projects.loadTags(id);
+  },
+  { immediate: true },
 );
 
 async function runTranscribe(): Promise<void> {
@@ -115,6 +131,38 @@ async function runExport(): Promise<void> {
     exporting.value = false;
   }
 }
+
+async function submitRename(name: string): Promise<void> {
+  const current = recording.value;
+  renameOpen.value = false;
+  if (current) await projects.renameRecording(current.id, name);
+}
+
+async function confirmDelete(): Promise<void> {
+  const current = recording.value;
+  deleteOpen.value = false;
+  if (current) await projects.removeRecording(current.id);
+}
+
+async function onMoveProject(event: Event): Promise<void> {
+  const current = recording.value;
+  if (!current) return;
+  const value = (event.target as HTMLSelectElement).value;
+  await projects.assignRecording(current.id, value === "" ? null : value);
+}
+
+async function submitTag(): Promise<void> {
+  const current = recording.value;
+  const name = newTag.value.trim();
+  if (!current || name === "") return;
+  newTag.value = "";
+  await projects.addTag(current.id, name);
+}
+
+async function removeTag(tagId: number): Promise<void> {
+  const current = recording.value;
+  if (current) await projects.removeTag(current.id, tagId);
+}
 </script>
 
 <template>
@@ -123,7 +171,10 @@ async function runExport(): Promise<void> {
 
     <ProcessingTimeline />
 
-    <section v-if="!recording" class="grid place-items-center rounded-2xl border border-base-800 bg-base-900 px-6 py-16 text-center">
+    <section
+      v-if="!recording"
+      class="grid place-items-center rounded-2xl border border-base-800 bg-base-900 px-6 py-16 text-center"
+    >
       <div class="max-w-sm">
         <p class="text-sm font-medium text-slate-300">🎙️ {{ t("workspace.selectRecording") }}</p>
         <p class="mt-1 text-xs text-base-500">{{ t("workspace.selectRecordingHint") }}</p>
@@ -131,44 +182,114 @@ async function runExport(): Promise<void> {
     </section>
 
     <template v-else>
-      <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-base-800 bg-base-900 px-5 py-4">
-        <div class="min-w-0">
-          <p class="truncate text-sm font-semibold text-slate-100">{{ recording.file_name }}</p>
-          <p class="truncate font-mono text-[11px] text-base-500">{{ recording.source_path }}</p>
+      <div class="flex flex-col gap-3 rounded-2xl border border-base-800 bg-base-900 px-5 py-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex min-w-0 items-center gap-2">
+            <p class="truncate text-sm font-semibold text-slate-100">
+              🎵 {{ recording.file_name }}
+            </p>
+            <button
+              type="button"
+              class="shrink-0 text-base-500 transition-colors hover:text-accent-400"
+              :title="t('recordings.renameTitle')"
+              @click="renameOpen = true"
+            >
+              ✏️
+            </button>
+            <button
+              type="button"
+              class="shrink-0 text-base-500 transition-colors hover:text-rose-400"
+              :title="t('recordings.deleteTitle')"
+              @click="deleteOpen = true"
+            >
+              🗑️
+            </button>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              class="rounded-lg border border-base-700 bg-base-850 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-accent-500 disabled:cursor-not-allowed disabled:opacity-40"
+              :disabled="!canTranscribe || pipeline.isRunning"
+              @click="runTranscribe"
+            >
+              📝 {{ t("actions.transcribe") }}
+            </button>
+            <button
+              type="button"
+              class="rounded-lg border border-base-700 bg-base-850 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-accent-500 disabled:cursor-not-allowed disabled:opacity-40"
+              :disabled="!canDiarize || pipeline.isRunning"
+              @click="runDiarize"
+            >
+              👥 {{ t("actions.diarize") }}
+            </button>
+            <button
+              type="button"
+              class="rounded-lg border border-base-700 bg-base-850 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-accent-500 disabled:cursor-not-allowed disabled:opacity-40"
+              :disabled="pipeline.isRunning"
+              @click="runSummarize"
+            >
+              ✨ {{ t("actions.summarize") }}
+            </button>
+            <button
+              type="button"
+              class="rounded-lg bg-accent-500 px-3 py-1.5 text-xs font-medium text-base-950 transition-colors hover:bg-accent-400 disabled:opacity-40"
+              :disabled="exporting"
+              @click="runExport"
+            >
+              💾 {{ t("actions.export") }}
+            </button>
+          </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            class="rounded-lg border border-base-700 bg-base-850 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-accent-500 disabled:cursor-not-allowed disabled:opacity-40"
-            :disabled="!canTranscribe || pipeline.isRunning"
-            @click="runTranscribe"
-          >
-            📝 {{ t("actions.transcribe") }}
-          </button>
-          <button
-            type="button"
-            class="rounded-lg border border-base-700 bg-base-850 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-accent-500 disabled:cursor-not-allowed disabled:opacity-40"
-            :disabled="!canDiarize || pipeline.isRunning"
-            @click="runDiarize"
-          >
-            👥 {{ t("actions.diarize") }}
-          </button>
-          <button
-            type="button"
-            class="rounded-lg border border-base-700 bg-base-850 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-accent-500 disabled:cursor-not-allowed disabled:opacity-40"
-            :disabled="pipeline.isRunning"
-            @click="runSummarize"
-          >
-            ✨ {{ t("actions.summarize") }}
-          </button>
-          <button
-            type="button"
-            class="rounded-lg bg-accent-500 px-3 py-1.5 text-xs font-medium text-base-950 transition-colors hover:bg-accent-400 disabled:opacity-40"
-            :disabled="exporting"
-            @click="runExport"
-          >
-            💾 {{ t("actions.export") }}
-          </button>
+
+        <p class="truncate font-mono text-[11px] text-base-500">{{ recording.source_path }}</p>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <label class="flex items-center gap-2 text-xs text-base-500">
+            <span>📂 {{ t("recordings.moveTo") }}</span>
+            <select
+              :value="recording.project_id ?? ''"
+              class="rounded-lg border border-base-700 bg-base-850 px-2 py-1 text-xs text-slate-200 outline-none focus:border-accent-500"
+              @change="onMoveProject"
+            >
+              <option value="">{{ t("recordings.noProject") }}</option>
+              <option v-for="project in projects.projects" :key="project.id" :value="project.id">
+                {{ project.name }}
+              </option>
+            </select>
+          </label>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs text-base-500">🏷️</span>
+            <span
+              v-for="tag in tags"
+              :key="tag.id"
+              class="inline-flex items-center gap-1 rounded-full bg-base-800 px-2 py-0.5 text-[11px] text-slate-300"
+            >
+              {{ tag.tag_name }}
+              <button
+                type="button"
+                class="text-base-500 transition-colors hover:text-rose-400"
+                @click="removeTag(tag.id)"
+              >
+                ✕
+              </button>
+            </span>
+            <input
+              v-model="newTag"
+              type="text"
+              :placeholder="t('recordings.tagPlaceholder')"
+              class="w-24 rounded-md border border-base-700 bg-base-850 px-2 py-0.5 text-[11px] text-slate-200 outline-none placeholder:text-base-500 focus:border-accent-500"
+              @keydown.enter.prevent="submitTag"
+            />
+            <button
+              type="button"
+              class="text-base-500 transition-colors hover:text-accent-400"
+              :title="t('recordings.addTag')"
+              @click="submitTag"
+            >
+              ➕
+            </button>
+          </div>
         </div>
       </div>
 
@@ -203,5 +324,24 @@ async function runExport(): Promise<void> {
         </div>
       </section>
     </template>
+
+    <TextInputDialog
+      :open="renameOpen"
+      :title="t('recordings.renameTitle')"
+      :label="t('recordings.renameLabel')"
+      :initial-value="recording?.file_name"
+      @confirm="submitRename"
+      @cancel="renameOpen = false"
+    />
+
+    <ConfirmDialog
+      :open="deleteOpen"
+      :title="t('recordings.deleteTitle')"
+      :message="t('recordings.deleteMessage', { name: recording?.file_name })"
+      :confirm-label="t('common.delete')"
+      danger
+      @confirm="confirmDelete"
+      @cancel="deleteOpen = false"
+    />
   </div>
 </template>

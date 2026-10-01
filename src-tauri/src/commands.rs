@@ -155,6 +155,32 @@ pub fn add_tag(
 }
 
 #[tauri::command]
+pub fn delete_tag(state: State<'_, AppState>, tag_id: i64) -> AppResult<()> {
+    let conn = state.connection();
+    pm::delete_tag(&conn, tag_id)
+}
+
+#[tauri::command]
+pub fn rename_project(
+    state: State<'_, AppState>,
+    project_id: String,
+    name: String,
+) -> AppResult<Project> {
+    let conn = state.connection();
+    pm::rename_project(&conn, &project_id, &name)
+}
+
+#[tauri::command]
+pub fn rename_recording(
+    state: State<'_, AppState>,
+    recording_id: String,
+    file_name: String,
+) -> AppResult<Recording> {
+    let conn = state.connection();
+    pm::rename_recording(&conn, &recording_id, &file_name)
+}
+
+#[tauri::command]
 pub async fn summarize_text(
     transcript: String,
     provider: SummaryProvider,

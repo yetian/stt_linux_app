@@ -3,6 +3,13 @@
     "name": "Lokaler Rekorder-Assistent",
     "tagline": "Private, Offline-Transkription & Zusammenfassungen"
   },
+  "common": {
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "rename": "Umbenennen"
+  },
   "nav": {
     "workspace": "Arbeitsbereich",
     "projects": "Projekte",
@@ -31,7 +38,11 @@
     "new": "Neues Projekt",
     "empty": "Noch keine Projekte",
     "general": "Allgemeine Notizen",
-    "count": "keine Aufnahmen | 1 Aufnahme | {count} Aufnahmen"
+    "count": "keine Aufnahmen | 1 Aufnahme | {count} Aufnahmen",
+    "renameTitle": "Projekt umbenennen",
+    "renameLabel": "Projektname",
+    "deleteTitle": "Projekt löschen",
+    "deleteMessage": "\"{name}\" und die zugehörigen {count} Aufnahme(n) löschen? Dies kann nicht rückgängig gemacht werden."
   },
   "dropzone": {
     "title": "Audiodateien hier ablegen",
@@ -68,7 +79,15 @@
     "failed": "Fehlgeschlagen"
   },
   "recordings": {
-    "empty": "Noch keine Aufnahmen"
+    "empty": "Noch keine Aufnahmen",
+    "renameTitle": "Aufnahme umbenennen",
+    "renameLabel": "Dateiname",
+    "deleteTitle": "Aufnahme löschen",
+    "deleteMessage": "\"{name}\" löschen? Dies kann nicht rückgängig gemacht werden.",
+    "moveTo": "Projekt",
+    "noProject": "Kein Projekt",
+    "addTag": "Tag hinzufügen",
+    "tagPlaceholder": "Tag"
   },
   "actions": {
     "transcribe": "Transkribieren",

@@ -3,6 +3,13 @@
     "name": "Local Recorder Assistant",
     "tagline": "Private, offline transcription & summaries"
   },
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "rename": "Rename"
+  },
   "nav": {
     "workspace": "Workspace",
     "projects": "Projects",
@@ -31,7 +38,11 @@
     "new": "New project",
     "empty": "No projects yet",
     "general": "General Notes",
-    "count": "no recordings | 1 recording | {count} recordings"
+    "count": "no recordings | 1 recording | {count} recordings",
+    "renameTitle": "Rename project",
+    "renameLabel": "Project name",
+    "deleteTitle": "Delete project",
+    "deleteMessage": "Delete \"{name}\" and its {count} recording(s)? This cannot be undone."
   },
   "dropzone": {
     "title": "Drop audio files here",
@@ -68,7 +79,15 @@
     "failed": "Failed"
   },
   "recordings": {
-    "empty": "No recordings yet"
+    "empty": "No recordings yet",
+    "renameTitle": "Rename recording",
+    "renameLabel": "File name",
+    "deleteTitle": "Delete recording",
+    "deleteMessage": "Delete \"{name}\"? This cannot be undone.",
+    "moveTo": "Project",
+    "noProject": "No project",
+    "addTag": "Add tag",
+    "tagPlaceholder": "tag"
   },
   "actions": {
     "transcribe": "Transcribe",

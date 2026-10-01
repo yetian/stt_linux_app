@@ -13,6 +13,9 @@ export const projectApi = {
   remove: (projectId: string) =>
     invoke<void>("delete_project", { projectId }),
 
+  rename: (projectId: string, name: string) =>
+    invoke<Project>("rename_project", { projectId, name }),
+
   listRecordings: (projectId?: string | null) =>
     invoke<Recording[]>("list_recordings", { projectId: projectId ?? null }),
 
@@ -36,6 +39,9 @@ export const projectApi = {
   removeRecording: (recordingId: string) =>
     invoke<void>("delete_recording", { recordingId }),
 
+  renameRecording: (recordingId: string, fileName: string) =>
+    invoke<Recording>("rename_recording", { recordingId, fileName }),
+
   updateStatus: (recordingId: string, status: string) =>
     invoke<void>("update_recording_status", { recordingId, status }),
 
@@ -50,6 +56,8 @@ export const projectApi = {
 
   addTag: (recordingId: string, tagName: string) =>
     invoke<void>("add_tag", { recordingId, tagName }),
+
+  removeTag: (tagId: number) => invoke<void>("delete_tag", { tagId }),
 
   exportRecording: (recordingId: string) =>
     invoke<string>("export_recording", { recordingId }),

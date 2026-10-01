@@ -3,6 +3,13 @@
     "name": "本地录音助手",
     "tagline": "隐私优先的离线转写与摘要"
   },
+  "common": {
+    "cancel": "取消",
+    "confirm": "确认",
+    "save": "保存",
+    "delete": "删除",
+    "rename": "重命名"
+  },
   "nav": {
     "workspace": "工作台",
     "projects": "项目",
@@ -31,7 +38,11 @@
     "new": "新建项目",
     "empty": "暂无项目",
     "general": "通用笔记",
-    "count": "暂无录音 | 1 条录音 | {count} 条录音"
+    "count": "暂无录音 | 1 条录音 | {count} 条录音",
+    "renameTitle": "重命名项目",
+    "renameLabel": "项目名称",
+    "deleteTitle": "删除项目",
+    "deleteMessage": "确定删除“{name}”及其 {count} 条录音吗？此操作无法撤销。"
   },
   "dropzone": {
     "title": "将音频文件拖放到此处",
@@ -68,7 +79,15 @@
     "failed": "失败"
   },
   "recordings": {
-    "empty": "暂无录音"
+    "empty": "暂无录音",
+    "renameTitle": "重命名录音",
+    "renameLabel": "文件名",
+    "deleteTitle": "删除录音",
+    "deleteMessage": "确定删除“{name}”吗？此操作无法撤销。",
+    "moveTo": "所属项目",
+    "noProject": "未分配项目",
+    "addTag": "添加标签",
+    "tagPlaceholder": "标签"
   },
   "actions": {
     "transcribe": "语音转写",

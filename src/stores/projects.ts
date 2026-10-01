@@ -1,13 +1,14 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { projectApi } from "@/api/projects";
-import type { NewRecording, Project, Recording } from "@/types";
+import type { NewRecording, Project, Recording, Tag } from "@/types";
 
 export const useProjectsStore = defineStore("projects", () => {
   const projects = ref<Project[]>([]);
   const recordings = ref<Recording[]>([]);
   const activeProjectId = ref<string | null>(null);
   const activeRecordingId = ref<string | null>(null);
+  const tagsByRecording = ref<Record<string, Tag[]>>({});
   const loading = ref(false);
   const error = ref<string | null>(null);
 
@@ -81,6 +82,70 @@ export const useProjectsStore = defineStore("projects", () => {
     }
   }
 
+  async function renameProject(projectId: string, name: string): Promise<void> {
+    error.value = null;
+    try {
+      const updated = await projectApi.rename(projectId, name);
+      const index = projects.value.findIndex((p) => p.id === projectId);
+      if (index !== -1) {
+        projects.value[index] = updated;
+      }
+    } catch (cause) {
+      error.value = String(cause);
+    }
+  }
+
+  async function renameRecording(
+    recordingId: string,
+    fileName: string,
+  ): Promise<void> {
+    error.value = null;
+    try {
+      const updated = await projectApi.renameRecording(recordingId, fileName);
+      const index = recordings.value.findIndex((r) => r.id === recordingId);
+      if (index !== -1) {
+        recordings.value[index] = updated;
+      }
+    } catch (cause) {
+      error.value = String(cause);
+    }
+  }
+
+  async function loadTags(recordingId: string): Promise<void> {
+    try {
+      const tags = await projectApi.listTags(recordingId);
+      tagsByRecording.value = { ...tagsByRecording.value, [recordingId]: tags };
+    } catch (cause) {
+      error.value = String(cause);
+    }
+  }
+
+  async function addTag(recordingId: string, tagName: string): Promise<void> {
+    const name = tagName.trim();
+    if (name === "") return;
+    error.value = null;
+    try {
+      await projectApi.addTag(recordingId, name);
+      await loadTags(recordingId);
+    } catch (cause) {
+      error.value = String(cause);
+    }
+  }
+
+  async function removeTag(recordingId: string, tagId: number): Promise<void> {
+    error.value = null;
+    try {
+      await projectApi.removeTag(tagId);
+      await loadTags(recordingId);
+    } catch (cause) {
+      error.value = String(cause);
+    }
+  }
+
+  function recordingTags(recordingId: string): Tag[] {
+    return tagsByRecording.value[recordingId] ?? [];
+  }
+
   async function addRecording(input: NewRecording): Promise<Recording | null> {
     error.value = null;
     try {
@@ -152,6 +217,7 @@ export const useProjectsStore = defineStore("projects", () => {
     activeProject,
     activeRecording,
     totalRecordings,
+    tagsByRecording,
     loading,
     error,
     loadProjects,
@@ -159,9 +225,15 @@ export const useProjectsStore = defineStore("projects", () => {
     selectProject,
     createProject,
     removeProject,
+    renameProject,
     addRecording,
     removeRecording,
+    renameRecording,
     assignRecording,
+    loadTags,
+    addTag,
+    removeTag,
+    recordingTags,
     search,
     setActiveRecording,
   };

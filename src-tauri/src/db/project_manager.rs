@@ -295,6 +295,39 @@ pub fn list_tags(conn: &Connection, recording_id: &str) -> AppResult<Vec<Tag>> {
     Ok(tags)
 }
 
+pub fn rename_project(conn: &Connection, id: &str, name: &str) -> AppResult<Project> {
+    let trimmed = name.trim();
+    if trimmed.is_empty() {
+        return Err(AppError::msg("project name must not be empty"));
+    }
+
+    conn.execute(
+        "UPDATE projects SET name = ?1 WHERE id = ?2",
+        params![trimmed, id],
+    )?;
+
+    get_project(conn, id)
+}
+
+pub fn rename_recording(conn: &Connection, id: &str, file_name: &str) -> AppResult<Recording> {
+    let trimmed = file_name.trim();
+    if trimmed.is_empty() {
+        return Err(AppError::msg("recording name must not be empty"));
+    }
+
+    conn.execute(
+        "UPDATE recordings SET file_name = ?1 WHERE id = ?2",
+        params![trimmed, id],
+    )?;
+
+    get_recording(conn, id)
+}
+
+pub fn delete_tag(conn: &Connection, tag_id: i64) -> AppResult<()> {
+    conn.execute("DELETE FROM tags WHERE id = ?1", params![tag_id])?;
+    Ok(())
+}
+
 fn collect(
     rows: rusqlite::MappedRows<'_, impl FnMut(&rusqlite::Row<'_>) -> rusqlite::Result<Recording>>,
 ) -> AppResult<Vec<Recording>> {
@@ -438,6 +471,34 @@ mod tests {
         delete_recording(&conn, &recording.id).unwrap();
         assert!(list_tags(&conn, &recording.id).unwrap().is_empty());
         assert!(get_recording(&conn, &recording.id).is_err());
+    }
+
+    #[test]
+    fn renames_project_and_recording() {
+        let conn = setup();
+        let project = create_project(&conn, "Old", None).unwrap();
+        assert_eq!(rename_project(&conn, &project.id, "  New  ").unwrap().name, "New");
+        assert!(rename_project(&conn, &project.id, "   ").is_err());
+
+        let recording = add_recording(&conn, &new_recording("a.mp3", None)).unwrap();
+        assert_eq!(rename_recording(&conn, &recording.id, "b.mp3").unwrap().file_name, "b.mp3");
+        assert!(rename_recording(&conn, &recording.id, "").is_err());
+    }
+
+    #[test]
+    fn deletes_a_single_tag() {
+        let conn = setup();
+        let recording = add_recording(&conn, &new_recording("a.mp3", None)).unwrap();
+        add_tag(&conn, &recording.id, "keep").unwrap();
+        add_tag(&conn, &recording.id, "drop").unwrap();
+
+        let tags = list_tags(&conn, &recording.id).unwrap();
+        let tag = tags.iter().find(|tag| tag.tag_name == "drop").unwrap();
+        delete_tag(&conn, tag.id).unwrap();
+
+        let remaining = list_tags(&conn, &recording.id).unwrap();
+        assert_eq!(remaining.len(), 1);
+        assert_eq!(remaining[0].tag_name, "keep");
     }
 
     #[test]
