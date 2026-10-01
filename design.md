@@ -176,9 +176,9 @@ Applications will **not** bundle large model files inside installation packages.
   "diarization_models": [
     {
       "id": "camplusplus-onnx",
-      "name": "Cam++ Speaker Embedding Model",
-      "size_mb": 85,
-      "url": "https://huggingface.co/onnx-community/camplusplus/resolve/main/camplusplus.onnx",
+      "name": "Cam++ Speaker Embedding Model (3D-Speaker)",
+      "size_mb": 27,
+      "url": "https://huggingface.co/csukuangfj/speaker-embedding-models/resolve/main/3dspeaker_speech_campplus_sv_zh-cn_16k-common.onnx",
       "filename": "camplusplus.onnx"
     }
   ]
@@ -253,3 +253,40 @@ uuid = { version = "1.8", features = ["v4", "serde"] }
 - [x] **Phase 5**: Add USB device auto-detection under `/media/$USER/` and IPC file bridge.
 - [x] **Phase 6**: Build LLM client connecting to Ollama (`http://localhost:11434`) with localized prompt generation.
 - [x] **Phase 7**: Build frontend project management workspace, search/filter views, model downloader, and auto-export functionality.
+
+---
+
+## 9. Documentation, Versioning & Git Workflow
+
+### Versioning
+- The project follows **Semantic Versioning** (`MAJOR.MINOR.PATCH`).
+- Every change bumps the **patch** version and updates the version in all three places so they stay
+  in sync:
+  1. `package.json` → `"version"`
+  2. `src-tauri/Cargo.toml` → `[package] version`
+  3. `src-tauri/tauri.conf.json` → `"version"`
+- Breaking changes bump `MINOR` during the `0.x` series and must be called out in the README and this
+  document.
+
+### Git workflow
+- **Remote**: `origin` → `git@github.com:yetian/stt_linux_app.git` (SSH).
+- **Commits**: [Conventional Commits](https://www.conventionalcommits.org/) — `feat`, `fix`,
+  `refactor`, `docs`, `chore`, `test` — with a concise subject and a body enumerating the notable
+  changes (including the version bump).
+- **Scope of a commit**: code + tests + version bump + README/design updates for the same change.
+- **Never committed** (see `.gitignore`): build output (`dist/`, `target/`, `gen/schemas`),
+  dependencies, downloaded model binaries (`models/*`), local/machine paths, and any credentials or
+  secrets.
+
+```bash
+# implement change, update README/design if notable
+# bump version in package.json, src-tauri/Cargo.toml, src-tauri/tauri.conf.json
+git add -A
+git commit -m "fix(scope): short summary"
+git push origin HEAD
+```
+
+### Documentation rule
+For every **notable or breaking** change, update:
+- `README.md` — Features / Usage / Troubleshooting / Changelog / Backend Commands as applicable.
+- `design.md` — the affected module section, and the changelog entry when architecture changes.

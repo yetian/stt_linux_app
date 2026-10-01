@@ -16,16 +16,20 @@ Everything runs on your machine. No audio, transcript, or summary ever leaves th
 - **Local summarization** — Ollama (`/api/generate`) or OpenAI-compatible (`/chat/completions`),
   with prompts localized to the selected output language.
 - **Project workspace** — embedded SQLite for projects, recordings, statuses, and tags.
+- **Full lifecycle** — create, rename, move, tag, and delete projects and recordings, with a
+  confirmation dialog for destructive actions.
 - **Model manager** — downloads models into a local `models/` folder with live progress.
 - **Export** — writes `<recording>.md` (summary + transcript) to `~/Documents/Recordings_Summary`.
 - **i18n** — English, Simplified Chinese, German UI, switchable at runtime.
+- **Audio ingestion** — native file picker (Font Awesome UI), window drag-and-drop, and USB
+  recorder file list.
 
 ## Tech Stack
 
 | Layer | Technology |
 | --- | --- |
 | Shell | Tauri 2 (Rust backend, WebView UI) |
-| Frontend | Vue 3 + TypeScript + Vite + Tailwind CSS v4 + Pinia + vue-i18n |
+| Frontend | Vue 3 + TypeScript + Vite + Tailwind CSS v4 + Pinia + vue-i18n + Font Awesome |
 | STT | `whisper-rs` (whisper.cpp, CUDA) |
 | Diarization | `ort` (ONNX Runtime, CUDA) + `rustfft` |
 | Audio | `symphonia` |
@@ -100,12 +104,14 @@ Local LLM endpoints (configurable in **Settings**):
 
 1. Open **Models** and download a Whisper model and the Cam++ diarization model.
 2. Add a recording:
-   - Connect the recorder; the **On Device** list appears in the sidebar — click a file to add it, or
+   - Click the dropzone to open the native file picker, or
    - Drag an audio file onto the window, or
-   - Assign it to a project from the sidebar.
-3. Select the recording in the sidebar and run the pipeline in the workspace:
+   - Connect the recorder and click a file in the **On Device** sidebar list.
+3. Manage the recording from the workspace header: rename, move between projects, add/remove
+   tags, or delete (with confirmation).
+4. Select the recording in the sidebar and run the pipeline in the workspace:
    `Transcribe` → `Identify speakers` → `Summarize` → `Export .md`.
-4. Search across transcripts, summaries, and tags from the sidebar search box.
+5. Search across transcripts, summaries, and tags from the sidebar search box.
 
 ## Project Layout
 
@@ -139,8 +145,10 @@ stt_app/
 | --- | --- |
 | `get_app_paths` | Resolve config, data, models, and output directories |
 | `get_connected_device` | Current recorder mount and audio files |
-| `create_project` / `list_projects` / `delete_project` | Project management |
-| `add_recording` / `list_recordings` / `delete_recording` | Recording management |
+| `create_project` / `list_projects` / `rename_project` / `delete_project` | Project management |
+| `add_recording` / `list_recordings` / `rename_recording` / `delete_recording` | Recording management |
+| `assign_recording_to_project` | Move a recording between projects |
+| `add_tag` / `list_tags` / `delete_tag` | Recording tags |
 | `search_recordings` | Keyword / project / tag search |
 | `transcribe_recording` | Decode + Whisper transcription (saves transcript) |
 | `diarize_recording` | Embed, cluster, align speakers (saves speaker transcript) |
@@ -158,6 +166,40 @@ stt_app/
   resident LLM size. Peak usage is budgeted around 6.7 GB in `design.md`.
 - **No recorder detected** — verify the mount appears under `/media/$USER` or `/run/media/$USER`
   and contains a supported audio extension.
+
+## Versioning & Git Workflow
+
+- **Semantic Versioning.** Every change bumps the **patch** version and keeps the version in sync
+  across three files:
+  - `package.json`
+  - `src-tauri/Cargo.toml`
+  - `src-tauri/tauri.conf.json`
+- **Conventional Commits** (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`), with a body listing the
+  notable changes.
+- **Notable or breaking changes** must be reflected in this README (Features, Usage, Troubleshooting,
+  or this section) and in [`design.md`](design.md).
+- **Remote**: `git@github.com:yetian/stt_linux_app.git` (`origin`).
+- **Do not commit** build output (`dist/`, `target/`), dependencies, model binaries (`models/*`),
+  or credentials — all covered by `.gitignore`.
+
+```bash
+# sync version across the three files, then
+git add -A
+git commit -m "fix: ..."
+git push origin HEAD
+```
+
+## Changelog
+
+| Version | Changes |
+| --- | --- |
+| 0.1.6 | Dropzone click opens the native file picker (`tauri-plugin-dialog`). |
+| 0.1.5 | Fixed the Cam++ diarization model URL (the previous source returned 401). |
+| 0.1.4 | Replaced unicode icons with Font Awesome. |
+| 0.1.3 | Full project/recording lifecycle (rename, move, tags, delete) with confirmations. |
+| 0.1.2 | Moved the language selector into Settings; added unicode icons. |
+| 0.1.1 | Added 48 unit tests; fixed the CUDA `-fPIC` / linker configuration. |
+| 0.1.0 | Initial scaffold: Tauri 2 + Vue 3, i18n, SQLite, USB watcher, LLM client. |
 
 ## License
 
