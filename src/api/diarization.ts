@@ -7,11 +7,13 @@ export const diarizationApi = {
     embeddingModelPath: string,
     segments: TranscriptSegment[] | null = null,
     threshold = 0.35,
+    useGpu = true,
   ) =>
     invoke<DiarizedSegment[]>("diarize_recording", {
       recordingId,
       embeddingModelPath,
       segments,
       threshold,
+      useGpu,
     }),
 };

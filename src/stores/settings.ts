@@ -30,6 +30,7 @@ export const useSettingsStore = defineStore("settings", () => {
   const openaiEndpoint = ref("http://127.0.0.1:1234/v1");
   const ollamaModel = ref("qwen2.5:14b");
   const openaiModel = ref("");
+  const useGpu = ref(true);
 
   const activeEndpoint = computed(() =>
     summaryProvider.value === "ollama" ? ollamaEndpoint.value : openaiEndpoint.value,
@@ -70,6 +71,7 @@ export const useSettingsStore = defineStore("settings", () => {
     openaiEndpoint,
     ollamaModel,
     openaiModel,
+    useGpu,
     activeEndpoint,
     activeModel,
     setLocale,

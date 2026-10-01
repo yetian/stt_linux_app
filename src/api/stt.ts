@@ -7,11 +7,13 @@ export const sttApi = {
     modelPath: string,
     language?: string | null,
     translate = false,
+    useGpu = true,
   ) =>
     invoke<TranscriptSegment[]>("transcribe_recording", {
       recordingId,
       modelPath,
       language: language ?? null,
       translate,
+      useGpu,
     }),
 };

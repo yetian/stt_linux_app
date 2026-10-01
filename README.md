@@ -166,8 +166,10 @@ stt_app/
   writable or set `LRA_MODELS_DIR`.
 - **Build fails resolving `libclang` / bindgen** — install `libclang-dev`; optionally set
   `WHISPER_DONT_GENERATE_BINDINGS=1`.
-- **CUDA out of memory / provider errors** — free VRAM by unloading other LLMs, or lower the
-  resident LLM size. Peak usage is budgeted around 6.7 GB in `design.md`.
+- **CUDA out of memory / provider errors** — disable **Use GPU acceleration** in Settings to run on
+  the CPU, free VRAM by unloading other LLMs, or lower the resident LLM size. Whisper's context is
+  cached and heavy GPU jobs are serialized to reduce peak memory. Peak usage is budgeted around
+  6.7 GB in `design.md`.
 - **No recorder detected** — verify the mount appears under `/media/$USER` or `/run/media/$USER`
   and contains a supported audio extension.
 
@@ -197,6 +199,7 @@ git push origin HEAD
 
 | Version | Changes |
 | --- | --- |
+| 0.1.16 | Resilience: Whisper context is cached (no reload/OOM), GPU jobs are serialized, a GPU toggle with CPU fallback was added, and diarization recovers text from existing transcripts. |
 | 0.1.15 | Live pipeline progress: per-stage/sub-step progress events, elapsed time, and ETA for transcription, diarization, and summarization. |
 | 0.1.14 | Summary: rendered Markdown preview (sanitized) with Preview/Markdown toggle and "Copy as Markdown". |
 | 0.1.13 | Settings: staged model configuration with a confirmation popup, provider connection test, and a model list fetched from the running Ollama / LM Studio server. |

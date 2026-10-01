@@ -73,6 +73,13 @@ v
 
 ### Module 3: Native STT Pipeline (`src-tauri/src/stt/whisper.rs`)
 - Wraps `whisper-rs` initialized with `WhisperContextParameters` targeting CUDA device 0.
+- The `WhisperContext` is **cached** across jobs (keyed by model path + GPU flag) so the model is not
+  reloaded per run. Heavy GPU jobs (transcribe / diarize / summarize) are **serialized** via a global
+  async mutex to avoid overlapping allocations and CUDA OOM aborts.
+- A **`use_gpu`** setting toggles GPU vs CPU for both Whisper and the ONNX speaker embedder; the
+  embedder falls back to the CPU provider if the CUDA execution provider fails.
+- If a recording has no persisted segment JSON, diarization reconstructs segments from the stored
+  `transcript_raw` (`[HH:MM:SS] …` lines) so existing transcripts still align to speaker text.
 - Model path: `~/.config/local-recorder/models/ggml-large-v3-turbo-q5_0.bin`.
 - Supports forced or automatic language detection (`auto`, `zh`, `en`, `de`).
 - Outputs time-stamped text segments: `[{ start_ms, end_ms, text, detected_language }]`.

@@ -1,8 +1,9 @@
 use std::path::Path;
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use rusqlite::Connection;
 use tauri::{AppHandle, State};
+use whisper_rs::WhisperContext;
 
 use crate::audio::decoder;
 use crate::db::project_manager as pm;
@@ -14,14 +15,44 @@ use crate::progress;
 use crate::services::model_downloader::{self, ModelStatus};
 use crate::stt::{self, TranscriptSegment, WhisperEngine};
 
+pub struct CachedWhisper {
+    pub model_path: String,
+    pub use_gpu: bool,
+    pub context: Arc<WhisperContext>,
+}
+
 pub struct AppState {
     pub db: Mutex<Connection>,
+    pub whisper: Arc<Mutex<Option<CachedWhisper>>>,
+    pub gpu_lock: Arc<tokio::sync::Mutex<()>>,
 }
 
 impl AppState {
     pub fn connection(&self) -> MutexGuard<'_, Connection> {
         self.db.lock().expect("database mutex poisoned")
     }
+}
+
+fn whisper_engine(
+    cache: &Arc<Mutex<Option<CachedWhisper>>>,
+    model_path: &str,
+    use_gpu: bool,
+) -> AppResult<WhisperEngine> {
+    let mut guard = cache.lock().expect("whisper mutex poisoned");
+
+    if let Some(cached) = guard.as_ref() {
+        if cached.model_path == model_path && cached.use_gpu == use_gpu {
+            return Ok(WhisperEngine::from_context(Arc::clone(&cached.context)));
+        }
+    }
+
+    let engine = WhisperEngine::load(Path::new(model_path), use_gpu)?;
+    *guard = Some(CachedWhisper {
+        model_path: model_path.to_string(),
+        use_gpu,
+        context: engine.context(),
+    });
+    Ok(engine)
 }
 
 #[tauri::command]
@@ -216,6 +247,8 @@ pub async fn summarize_recording(
             .ok_or_else(|| AppError::msg("recording has no transcript"))?
     };
 
+    let _guard = state.gpu_lock.clone().lock_owned().await;
+
     let options = SummarizeOptions {
         provider,
         endpoint,
@@ -252,6 +285,7 @@ pub async fn transcribe_recording(
     model_path: String,
     language: Option<String>,
     translate: Option<bool>,
+    use_gpu: Option<bool>,
 ) -> AppResult<Vec<TranscriptSegment>> {
     let source_path = {
         let conn = state.connection();
@@ -265,8 +299,12 @@ pub async fn transcribe_recording(
 
     let translate = translate.unwrap_or(false);
     let language = language.filter(|value| !value.trim().is_empty() && value != "auto");
+    let use_gpu = use_gpu.unwrap_or(true);
 
+    let _guard = state.gpu_lock.clone().lock_owned().await;
+    let whisper_cache = state.whisper.clone();
     let job_id = recording_id.clone();
+
     let task = tauri::async_runtime::spawn_blocking(
         move || -> AppResult<(Vec<TranscriptSegment>, f64, String)> {
             progress::emit(&app, &job_id, "decoding", None, Some(0.0));
@@ -274,7 +312,7 @@ pub async fn transcribe_recording(
             let duration = samples.len() as f64 / f64::from(decoder::TARGET_SAMPLE_RATE);
             progress::emit(&app, &job_id, "decoding", None, Some(1.0));
 
-            let engine = WhisperEngine::load(Path::new(&model_path))?;
+            let engine = whisper_engine(&whisper_cache, &model_path, use_gpu)?;
             let progress_app = app.clone();
             let progress_id = job_id.clone();
             let segments = engine.transcribe(&samples, language.as_deref(), translate, move |value| {
@@ -325,11 +363,16 @@ pub async fn diarize_recording(
     embedding_model_path: String,
     segments: Option<Vec<TranscriptSegment>>,
     threshold: Option<f32>,
+    use_gpu: Option<bool>,
 ) -> AppResult<Vec<DiarizedSegment>> {
-    let (source_path, stored_segments) = {
+    let (source_path, stored_segments, transcript_raw) = {
         let conn = state.connection();
         let recording = pm::get_recording(&conn, &recording_id)?;
-        (recording.source_path, recording.transcript_segments)
+        (
+            recording.source_path,
+            recording.transcript_segments,
+            recording.transcript_raw,
+        )
     };
 
     let segments = match segments {
@@ -337,11 +380,15 @@ pub async fn diarize_recording(
         _ => stored_segments
             .as_deref()
             .and_then(|json| serde_json::from_str::<Vec<TranscriptSegment>>(json).ok())
+            .filter(|list| !list.is_empty())
+            .or_else(|| transcript_raw.as_deref().map(stt::parse_transcript))
             .unwrap_or_default(),
     };
 
     let threshold = threshold.unwrap_or(0.35);
+    let use_gpu = use_gpu.unwrap_or(true);
 
+    let _guard = state.gpu_lock.clone().lock_owned().await;
     let job_id = recording_id.clone();
     let task = tauri::async_runtime::spawn_blocking(move || -> AppResult<Vec<SpeakerTurn>> {
         progress::emit(&app, &job_id, "decoding", None, Some(0.0));
@@ -353,6 +400,7 @@ pub async fn diarize_recording(
             decoder::TARGET_SAMPLE_RATE,
             Path::new(&embedding_model_path),
             threshold,
+            use_gpu,
             |phase, fraction| {
                 let step = match phase {
                     DiarizationPhase::Vad => "vad",

@@ -75,6 +75,8 @@ async function runTranscribe(): Promise<void> {
       current.id,
       model.path,
       settings.audioLanguage,
+      false,
+      settings.useGpu,
     );
     diarized.value = [];
     await projects.loadRecordings();
@@ -96,6 +98,8 @@ async function runDiarize(): Promise<void> {
       current.id,
       model.path,
       segments.value.length > 0 ? segments.value : null,
+      0.35,
+      settings.useGpu,
     );
     await projects.loadRecordings();
     pipeline.succeed();

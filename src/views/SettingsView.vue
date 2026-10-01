@@ -267,6 +267,19 @@ function onProvider(event: Event): void {
       </div>
     </section>
 
+    <section class="flex flex-col gap-3 rounded-2xl border border-base-800 bg-base-900 p-5">
+      <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
+        <i class="fa-solid fa-microchip mr-1"></i>{{ t("settings.performance") }}
+      </span>
+      <label class="flex items-center justify-between gap-3">
+        <span class="text-xs text-slate-300">
+          {{ t("settings.useGpu") }}
+          <span class="mt-0.5 block text-[10px] text-base-500">{{ t("settings.useGpuHint") }}</span>
+        </span>
+        <input v-model="settings.useGpu" type="checkbox" class="size-4 accent-sky-500" />
+      </label>
+    </section>
+
     <ConfirmDialog
       :open="confirmOpen"
       :title="t('settings.confirmTitle')"

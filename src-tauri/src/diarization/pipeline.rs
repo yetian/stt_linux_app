@@ -36,6 +36,7 @@ pub fn diarize<F>(
     sample_rate: u32,
     model_path: &Path,
     threshold: f32,
+    use_gpu: bool,
     mut on_progress: F,
 ) -> AppResult<Vec<SpeakerTurn>>
 where
@@ -50,7 +51,7 @@ where
     }
 
     let fbank = Fbank::new(sample_rate);
-    let mut embedder = SpeakerEmbedder::load(model_path)?;
+    let mut embedder = SpeakerEmbedder::load(model_path, use_gpu)?;
 
     let total = intervals.len();
     let mut embeddings = Vec::new();

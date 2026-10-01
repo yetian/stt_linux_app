@@ -10,7 +10,7 @@ mod progress;
 mod services;
 mod stt;
 
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use rusqlite::Connection;
 
@@ -49,6 +49,8 @@ fn build_state() -> AppState {
 
     AppState {
         db: Mutex::new(conn),
+        whisper: Arc::new(Mutex::new(None)),
+        gpu_lock: Arc::new(tokio::sync::Mutex::new(())),
     }
 }
 
