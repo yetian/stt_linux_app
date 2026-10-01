@@ -90,7 +90,8 @@ export interface RecorderFile {
   path: string;
   name: string;
   size_bytes: number;
-  modified_at?: string | null;
+  modified_at: number | null;
+  duration_secs: number | null;
 }
 
 export interface ConnectedDevice {

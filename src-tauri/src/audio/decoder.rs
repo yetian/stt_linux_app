@@ -121,9 +121,74 @@ fn resample_linear(input: &[f32], from_rate: u32, to_rate: u32) -> Vec<f32> {
     output
 }
 
+pub fn probe_duration_secs(path: &Path) -> Option<f64> {
+    let file = File::open(path).ok()?;
+    let stream = MediaSourceStream::new(Box::new(file), Default::default());
+
+    let mut hint = Hint::new();
+    if let Some(extension) = path.extension().and_then(|ext| ext.to_str()) {
+        hint.with_extension(extension);
+    }
+
+    let probed = symphonia::default::get_probe()
+        .format(
+            &hint,
+            stream,
+            &FormatOptions::default(),
+            &MetadataOptions::default(),
+        )
+        .ok()?;
+
+    let track = probed.format.default_track()?;
+    let sample_rate = track.codec_params.sample_rate?;
+    let frames = track.codec_params.n_frames?;
+
+    if sample_rate == 0 {
+        return None;
+    }
+
+    Some(frames as f64 / sample_rate as f64)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn wav_bytes(sample_rate: u32, seconds: u32) -> Vec<u8> {
+        let samples = sample_rate * seconds;
+        let data_len = samples * 2;
+        let mut bytes = Vec::with_capacity(44 + data_len as usize);
+        bytes.extend_from_slice(b"RIFF");
+        bytes.extend_from_slice(&(36 + data_len).to_le_bytes());
+        bytes.extend_from_slice(b"WAVE");
+        bytes.extend_from_slice(b"fmt ");
+        bytes.extend_from_slice(&16u32.to_le_bytes());
+        bytes.extend_from_slice(&1u16.to_le_bytes());
+        bytes.extend_from_slice(&1u16.to_le_bytes());
+        bytes.extend_from_slice(&sample_rate.to_le_bytes());
+        bytes.extend_from_slice(&(sample_rate * 2).to_le_bytes());
+        bytes.extend_from_slice(&2u16.to_le_bytes());
+        bytes.extend_from_slice(&16u16.to_le_bytes());
+        bytes.extend_from_slice(b"data");
+        bytes.extend_from_slice(&data_len.to_le_bytes());
+        bytes.extend(std::iter::repeat(0u8).take(data_len as usize));
+        bytes
+    }
+
+    #[test]
+    fn probes_wav_duration() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("tone.wav");
+        std::fs::write(&path, wav_bytes(8_000, 1)).unwrap();
+
+        let duration = probe_duration_secs(&path).unwrap();
+        assert!((duration - 1.0).abs() < 0.05, "{duration}");
+    }
+
+    #[test]
+    fn probes_missing_file_returns_none() {
+        assert!(probe_duration_secs(Path::new("/no/such/file.wav")).is_none());
+    }
 
     #[test]
     fn same_rate_is_identity() {

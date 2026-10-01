@@ -18,6 +18,7 @@ pub struct RecorderFile {
     pub name: String,
     pub size_bytes: u64,
     pub modified_at: Option<u64>,
+    pub duration_secs: Option<f64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -66,6 +67,7 @@ fn to_recorder_file(path: &Path) -> RecorderFile {
             .unwrap_or_default(),
         size_bytes: std::fs::metadata(path).map(|meta| meta.len()).unwrap_or(0),
         modified_at: modified_secs(path),
+        duration_secs: crate::audio::decoder::probe_duration_secs(path),
     }
 }
 

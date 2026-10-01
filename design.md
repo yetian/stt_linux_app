@@ -63,6 +63,8 @@ v
 ### Module 1: USB Mount & File System Monitor (`src-tauri/src/services/usb_watcher.rs`)
 - Continuously or periodically (every 3 seconds) inspects `/media/$USER/` and `/run/media/$USER/` for newly mounted removable block devices.
 - Filters target files by extensions: `.mp3`, `.wav`, `.m4a`, `.aac`, `.flac`.
+- Each file carries metadata: path, name, size, modified time, and probed audio duration
+  (`symphonia` header probe, no full decode). The UI renders these in a fixed-height scroll list.
 - Emits Tauri IPC Event `usb-device-attached` containing file paths and metadata.
 
 ### Module 2: Audio Preprocessing (`src-tauri/src/audio/decoder.rs`)
