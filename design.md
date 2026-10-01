@@ -231,6 +231,7 @@ Applications will **not** bundle large model files inside installation packages.
 - **Language Selector Component**: Global dropdown (English / 简体中文 / Deutsch).
 - **Project Tree View**: List workspaces (e.g., "Board Meetings", "Interview Series", "General Notes") with file counters.
 - **Search & Filter Bar**: Keyword filter across raw transcripts, AI summaries, and custom tags.
+- **Footer**: App version (`vX.Y.Z`) from Tauri's `getVersion()`, shown below the navigation items.
 
 2. **Top Header**:
 - Device status indicator (`USB Recorder Connected: /media/user/RECORDER` / `No Device`).

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { getVersion } from "@tauri-apps/api/app";
 import { useI18n } from "vue-i18n";
 import DeviceFiles from "@/components/DeviceFiles.vue";
 import ProjectTree from "@/components/ProjectTree.vue";
@@ -11,6 +12,16 @@ import { useUiStore, type AppView } from "@/stores/ui";
 const { t } = useI18n();
 const projects = useProjectsStore();
 const ui = useUiStore();
+
+const version = ref("");
+
+onMounted(async () => {
+  try {
+    version.value = await getVersion();
+  } catch {
+    /* cosmetic only — leave blank if the API is unavailable */
+  }
+});
 
 const query = ref("");
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -68,6 +79,9 @@ const navItems: { view: AppView; labelKey: string; icon: string }[] = [
       >
         <i :class="['fa-solid', item.icon, 'mr-2']"></i>{{ t(item.labelKey) }}
       </button>
+      <p v-if="version" class="px-3 pt-2 font-mono text-[10px] text-base-600">
+        v{{ version }}
+      </p>
     </div>
   </aside>
 </template>

@@ -201,6 +201,7 @@ git push origin HEAD
 
 | Version | Changes |
 | --- | --- |
+| 0.1.22 | Show the app version (`vX.Y.Z`, from Tauri `getVersion()`) in the sidebar footer. |
 | 0.1.21 | Settings persist across restarts: SQLite `user_settings` is the source of truth with a synchronous localStorage cache, so the summary provider, endpoints, models, languages, and GPU toggle are restored instead of resetting to Ollama defaults. |
 | 0.1.20 | Header GPU widget simplified to the detected GPU name and total VRAM (live values from `get_gpu_info`); usage bar removed. |
 | 0.1.19 | Full-screen toggle for the transcript/summary panel (expand icon, Esc to exit). |
