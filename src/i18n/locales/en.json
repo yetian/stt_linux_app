@@ -65,7 +65,8 @@
     "stepEmbedding": "Speaker embeddings",
     "stepClustering": "Clustering speakers",
     "stepConnecting": "Connecting to model",
-    "stepGenerating": "Generating summary"
+    "stepGenerating": "Generating summary",
+    "stepLoading": "Loading model"
   },
   "tabs": {
     "summary": "Summary Report",

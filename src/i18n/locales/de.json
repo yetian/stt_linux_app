@@ -65,7 +65,8 @@
     "stepEmbedding": "Sprecher-Embeddings",
     "stepClustering": "Sprecher gruppieren",
     "stepConnecting": "Verbindung zum Modell",
-    "stepGenerating": "Zusammenfassung erstellen"
+    "stepGenerating": "Zusammenfassung erstellen",
+    "stepLoading": "Modell wird geladen"
   },
   "tabs": {
     "summary": "Zusammenfassung",

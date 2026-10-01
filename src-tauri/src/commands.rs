@@ -247,8 +247,6 @@ pub async fn summarize_recording(
             .ok_or_else(|| AppError::msg("recording has no transcript"))?
     };
 
-    let _guard = state.gpu_lock.clone().lock_owned().await;
-
     let options = SummarizeOptions {
         provider,
         endpoint,
@@ -311,11 +309,17 @@ pub async fn transcribe_recording(
             let samples = decoder::decode_to_mono_16k(Path::new(&source_path))?;
             let duration = samples.len() as f64 / f64::from(decoder::TARGET_SAMPLE_RATE);
             progress::emit(&app, &job_id, "decoding", None, Some(1.0));
+            progress::emit(&app, &job_id, "transcribing", Some("loading"), None);
 
             let engine = whisper_engine(&whisper_cache, &model_path, use_gpu)?;
             let progress_app = app.clone();
             let progress_id = job_id.clone();
+            let mut last_percent = -1i32;
             let segments = engine.transcribe(&samples, language.as_deref(), translate, move |value| {
+                if value == last_percent {
+                    return;
+                }
+                last_percent = value;
                 progress::emit(
                     &progress_app,
                     &progress_id,

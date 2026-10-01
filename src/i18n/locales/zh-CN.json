@@ -65,7 +65,8 @@
     "stepEmbedding": "提取说话人特征",
     "stepClustering": "说话人聚类",
     "stepConnecting": "连接模型",
-    "stepGenerating": "生成摘要"
+    "stepGenerating": "生成摘要",
+    "stepLoading": "加载模型中"
   },
   "tabs": {
     "summary": "摘要报告",
