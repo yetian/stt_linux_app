@@ -25,9 +25,9 @@
   "diarization_models": [
     {
       "id": "camplusplus-onnx",
-      "name": "Cam++ Speaker Embedding Model",
-      "size_mb": 85,
-      "url": "https://huggingface.co/onnx-community/camplusplus/resolve/main/camplusplus.onnx",
+      "name": "Cam++ Speaker Embedding Model (3D-Speaker)",
+      "size_mb": 27,
+      "url": "https://huggingface.co/csukuangfj/speaker-embedding-models/resolve/main/3dspeaker_speech_campplus_sv_zh-cn_16k-common.onnx",
       "filename": "camplusplus.onnx"
     }
   ]
