@@ -32,18 +32,18 @@ async function browse(): Promise<void> {
 
 <template>
   <div
-    class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-base-700 bg-base-900 px-8 py-10 text-center transition-colors hover:border-accent-500 hover:bg-base-850"
+    class="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-base-700 bg-base-900 px-4 py-3 transition-colors hover:border-accent-500 hover:bg-base-850"
     @click="browse"
   >
-    <div class="rounded-full bg-base-800 p-4 text-accent-400">
-      <i class="fa-solid fa-file-audio text-xl"></i>
+    <div class="shrink-0 rounded-lg bg-base-800 p-2 text-accent-400">
+      <i class="fa-solid fa-file-audio"></i>
     </div>
-    <div>
-      <p class="text-sm font-medium text-slate-200">{{ t("dropzone.title") }}</p>
-      <p class="mt-1 text-xs text-base-500">{{ t("dropzone.subtitle") }}</p>
+    <div class="min-w-0 flex-1">
+      <p class="truncate text-sm font-medium text-slate-200">{{ t("dropzone.title") }}</p>
+      <p class="truncate text-xs text-base-500">{{ t("dropzone.subtitle") }}</p>
     </div>
     <span
-      class="rounded-lg border border-base-700 bg-base-850 px-3 py-1.5 text-xs font-medium text-slate-300"
+      class="shrink-0 rounded-lg border border-base-700 bg-base-850 px-3 py-1.5 text-xs font-medium text-slate-300"
     >
       <i class="fa-solid fa-folder-open mr-1"></i>{{ t("dropzone.browse") }}
     </span>

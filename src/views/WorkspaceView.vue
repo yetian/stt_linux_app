@@ -25,7 +25,7 @@ const models = useModelsStore();
 
 const TAB_ICONS = { summary: "fa-file-lines", transcript: "fa-comments" } as const;
 
-const activeTab = ref<"summary" | "transcript">("summary");
+const activeTab = ref<"summary" | "transcript">("transcript");
 const segments = ref<TranscriptSegment[]>([]);
 const diarized = ref<DiarizedSegment[]>([]);
 const exporting = ref(false);
@@ -298,7 +298,7 @@ async function removeTag(tagId: number): Promise<void> {
       <section class="rounded-2xl border border-base-800 bg-base-900">
         <div class="flex items-center gap-1 border-b border-base-800 p-2">
           <button
-            v-for="tab in (['summary', 'transcript'] as const)"
+            v-for="tab in (['transcript', 'summary'] as const)"
             :key="tab"
             type="button"
             class="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
