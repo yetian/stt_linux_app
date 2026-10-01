@@ -7,11 +7,8 @@ const query = defineModel<string>({ default: "" });
 
 <template>
   <div class="relative">
-    <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-base-500">
-      <svg viewBox="0 0 24 24" fill="none" class="size-4" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="7" />
-        <path d="m20 20-3.5-3.5" stroke-linecap="round" />
-      </svg>
+    <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-base-500">
+      🔍
     </span>
     <input
       v-model="query"

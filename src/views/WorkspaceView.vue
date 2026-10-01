@@ -21,6 +21,8 @@ const projects = useProjectsStore();
 const settings = useSettingsStore();
 const models = useModelsStore();
 
+const TAB_ICONS = { summary: "📄", transcript: "💬" } as const;
+
 const activeTab = ref<"summary" | "transcript">("summary");
 const segments = ref<TranscriptSegment[]>([]);
 const diarized = ref<DiarizedSegment[]>([]);
@@ -123,7 +125,7 @@ async function runExport(): Promise<void> {
 
     <section v-if="!recording" class="grid place-items-center rounded-2xl border border-base-800 bg-base-900 px-6 py-16 text-center">
       <div class="max-w-sm">
-        <p class="text-sm font-medium text-slate-300">{{ t("workspace.selectRecording") }}</p>
+        <p class="text-sm font-medium text-slate-300">🎙️ {{ t("workspace.selectRecording") }}</p>
         <p class="mt-1 text-xs text-base-500">{{ t("workspace.selectRecordingHint") }}</p>
       </div>
     </section>
@@ -141,7 +143,7 @@ async function runExport(): Promise<void> {
             :disabled="!canTranscribe || pipeline.isRunning"
             @click="runTranscribe"
           >
-            {{ t("actions.transcribe") }}
+            📝 {{ t("actions.transcribe") }}
           </button>
           <button
             type="button"
@@ -149,7 +151,7 @@ async function runExport(): Promise<void> {
             :disabled="!canDiarize || pipeline.isRunning"
             @click="runDiarize"
           >
-            {{ t("actions.diarize") }}
+            👥 {{ t("actions.diarize") }}
           </button>
           <button
             type="button"
@@ -157,7 +159,7 @@ async function runExport(): Promise<void> {
             :disabled="pipeline.isRunning"
             @click="runSummarize"
           >
-            {{ t("actions.summarize") }}
+            ✨ {{ t("actions.summarize") }}
           </button>
           <button
             type="button"
@@ -165,7 +167,7 @@ async function runExport(): Promise<void> {
             :disabled="exporting"
             @click="runExport"
           >
-            {{ t("actions.export") }}
+            💾 {{ t("actions.export") }}
           </button>
         </div>
       </div>
@@ -184,7 +186,7 @@ async function runExport(): Promise<void> {
             "
             @click="activeTab = tab"
           >
-            {{ t(`tabs.${tab}`) }}
+            {{ TAB_ICONS[tab] }} {{ t(`tabs.${tab}`) }}
           </button>
         </div>
 

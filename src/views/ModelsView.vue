@@ -20,10 +20,10 @@ onMounted(async () => {
 });
 
 const sections = computed(() => [
-  { key: "stt", label: t("models.speechModels"), items: models.sttModels },
+  { key: "stt", label: `🗣️ ${t("models.speechModels")}`, items: models.sttModels },
   {
     key: "diarization",
-    label: t("models.speakerModels"),
+    label: `👥 ${t("models.speakerModels")}`,
     items: models.diarizationModels,
   },
 ]);
@@ -36,7 +36,7 @@ function percent(model: ModelStatus): number {
 <template>
   <div class="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-6">
     <header>
-      <h1 class="text-lg font-semibold text-slate-100">{{ t("models.title") }}</h1>
+      <h1 class="text-lg font-semibold text-slate-100">🧠 {{ t("models.title") }}</h1>
       <p class="mt-1 text-xs text-base-500">{{ t("models.subtitle") }}</p>
       <p v-if="directory" class="mt-2 font-mono text-[11px] text-base-600">
         {{ t("models.directory") }}: {{ directory }}
@@ -74,7 +74,7 @@ function percent(model: ModelStatus): number {
               :disabled="models.isDownloading(model.filename)"
               @click="models.download(model)"
             >
-              {{ t("models.download") }}
+              ⬇️ {{ t("models.download") }}
             </button>
             <button
               v-else
@@ -82,7 +82,7 @@ function percent(model: ModelStatus): number {
               class="rounded-lg border border-base-700 bg-base-850 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-rose-500 hover:text-rose-400"
               @click="models.remove(model)"
             >
-              {{ t("models.delete") }}
+              🗑️ {{ t("models.delete") }}
             </button>
           </div>
         </div>

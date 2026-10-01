@@ -2,7 +2,6 @@
 import { onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import DeviceFiles from "@/components/DeviceFiles.vue";
-import LanguageSelector from "@/components/LanguageSelector.vue";
 import ProjectTree from "@/components/ProjectTree.vue";
 import RecordingList from "@/components/RecordingList.vue";
 import SearchBar from "@/components/SearchBar.vue";
@@ -27,22 +26,18 @@ onBeforeUnmount(() => {
   if (timer) clearTimeout(timer);
 });
 
-const navItems: { view: AppView; labelKey: string }[] = [
-  { view: "workspace", labelKey: "nav.workspace" },
-  { view: "models", labelKey: "nav.models" },
-  { view: "settings", labelKey: "nav.settings" },
+const navItems: { view: AppView; labelKey: string; icon: string }[] = [
+  { view: "workspace", labelKey: "nav.workspace", icon: "🖥️" },
+  { view: "models", labelKey: "nav.models", icon: "🧠" },
+  { view: "settings", labelKey: "nav.settings", icon: "⚙️" },
 ];
 </script>
 
 <template>
   <aside class="flex flex-col gap-4 border-r border-base-800 bg-base-900 px-4 py-5">
     <div class="flex items-center gap-3">
-      <div class="grid size-9 place-items-center rounded-xl bg-accent-500/15 text-accent-400">
-        <svg viewBox="0 0 24 24" fill="none" class="size-5" stroke="currentColor" stroke-width="1.8">
-          <path d="M12 3v9" stroke-linecap="round" />
-          <circle cx="12" cy="15" r="3" />
-          <path d="M5 11a7 7 0 0 0 14 0" stroke-linecap="round" />
-        </svg>
+      <div class="grid size-9 place-items-center rounded-xl bg-accent-500/15 text-lg leading-none text-accent-400">
+        🎙️
       </div>
       <div class="min-w-0">
         <p class="truncate text-sm font-semibold text-slate-100">{{ t("app.name") }}</p>
@@ -71,11 +66,8 @@ const navItems: { view: AppView; labelKey: string }[] = [
         "
         @click="ui.setView(item.view)"
       >
-        {{ t(item.labelKey) }}
+        <span class="mr-2">{{ item.icon }}</span>{{ t(item.labelKey) }}
       </button>
-      <div class="mt-2">
-        <LanguageSelector />
-      </div>
     </div>
   </aside>
 </template>

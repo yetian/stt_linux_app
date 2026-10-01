@@ -17,7 +17,7 @@ const percent = computed(() =>
   <div class="flex min-w-52 flex-col gap-1.5">
     <div class="flex items-center justify-between text-[11px]">
       <span class="font-medium tracking-wide text-base-500 uppercase">
-        {{ t("header.gpu") }} · {{ gpuName }}
+        🎮 {{ t("header.gpu") }} · {{ gpuName }}
       </span>
       <span class="font-mono text-slate-300">
         {{ usedVramGb.toFixed(1) }} / {{ totalVramGb }} GB

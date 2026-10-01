@@ -24,14 +24,14 @@ function onProvider(event: Event): void {
 
 <template>
   <div class="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-6">
-    <h1 class="text-lg font-semibold text-slate-100">{{ t("nav.settings") }}</h1>
+    <h1 class="text-lg font-semibold text-slate-100">⚙️ {{ t("nav.settings") }}</h1>
 
     <section class="flex flex-col gap-4 rounded-2xl border border-base-800 bg-base-900 p-5">
       <LanguageSelector />
 
       <label class="flex flex-col gap-1">
         <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-          {{ t("language.audio") }}
+          🎧 {{ t("language.audio") }}
         </span>
         <select
           :value="settings.audioLanguage"
@@ -46,7 +46,7 @@ function onProvider(event: Event): void {
 
       <label class="flex flex-col gap-1">
         <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-          {{ t("language.output") }}
+          📄 {{ t("language.output") }}
         </span>
         <input
           v-model="settings.outputLanguage"
@@ -59,7 +59,7 @@ function onProvider(event: Event): void {
     <section class="flex flex-col gap-4 rounded-2xl border border-base-800 bg-base-900 p-5">
       <label class="flex flex-col gap-1">
         <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-          {{ t("settings.provider") }}
+          🤖 {{ t("settings.provider") }}
         </span>
         <select
           :value="settings.summaryProvider"
@@ -74,7 +74,7 @@ function onProvider(event: Event): void {
 
       <label class="flex flex-col gap-1">
         <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-          {{ t("settings.ollamaEndpoint") }}
+          🔗 {{ t("settings.ollamaEndpoint") }}
         </span>
         <input
           v-model="settings.ollamaEndpoint"
@@ -85,7 +85,7 @@ function onProvider(event: Event): void {
 
       <label class="flex flex-col gap-1">
         <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-          {{ t("settings.openaiEndpoint") }}
+          🔗 {{ t("settings.openaiEndpoint") }}
         </span>
         <input
           v-model="settings.openaiEndpoint"
@@ -96,7 +96,7 @@ function onProvider(event: Event): void {
 
       <label class="flex flex-col gap-1">
         <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-          {{ t("settings.model") }}
+          🧩 {{ t("settings.model") }}
         </span>
         <input
           v-model="settings.ollamaModel"

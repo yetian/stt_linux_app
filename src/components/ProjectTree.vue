@@ -34,7 +34,7 @@ function cancelCreate(): void {
   <div class="flex flex-col gap-1">
     <div class="flex items-center justify-between px-1 pb-1">
       <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-        {{ t("nav.projects") }}
+        📁 {{ t("nav.projects") }}
       </span>
       <button
         type="button"
@@ -42,7 +42,7 @@ function cancelCreate(): void {
         :title="t('projects.new')"
         @click="startCreate"
       >
-        +
+        ➕
       </button>
     </div>
 
@@ -69,7 +69,7 @@ function cancelCreate(): void {
       "
       @click="projects.selectProject(null)"
     >
-      <span class="truncate">{{ t("nav.allRecordings") }}</span>
+      <span class="truncate">🗂️ {{ t("nav.allRecordings") }}</span>
       <span class="ml-2 font-mono text-[11px] text-base-500">
         {{ projects.totalRecordings }}
       </span>
@@ -91,7 +91,7 @@ function cancelCreate(): void {
       "
       @click="projects.selectProject(project.id)"
     >
-      <span class="truncate">{{ project.name }}</span>
+      <span class="truncate">📁 {{ project.name }}</span>
       <span class="ml-2 font-mono text-[11px] text-base-500">
         {{ project.recording_count }}
       </span>

@@ -22,7 +22,7 @@ async function add(file: RecorderFile): Promise<void> {
 <template>
   <div v-if="device.files.length > 0" class="flex flex-col gap-1">
     <span class="px-1 pb-1 text-[11px] font-medium tracking-wide text-base-500 uppercase">
-      {{ t("nav.deviceFiles") }}
+      📼 {{ t("nav.deviceFiles") }}
     </span>
 
     <button
@@ -32,8 +32,8 @@ async function add(file: RecorderFile): Promise<void> {
       class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-base-850"
       @click="add(file)"
     >
-      <span class="min-w-0 flex-1 truncate text-sm text-slate-300">{{ file.name }}</span>
-      <span class="text-[11px] text-accent-400">+</span>
+      <span class="min-w-0 flex-1 truncate text-sm text-slate-300">🎵 {{ file.name }}</span>
+      <span class="text-[11px] text-accent-400">➕</span>
     </button>
   </div>
 </template>
