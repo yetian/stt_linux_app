@@ -199,6 +199,7 @@ git push origin HEAD
 
 | Version | Changes |
 | --- | --- |
+| 0.1.18 | Fix UI freeze during transcription: Whisper's C progress callback now only records an atomic, which a polling task reads to emit events (no Tauri API calls from the callback thread). |
 | 0.1.17 | Progress accuracy: model-load time is reported as Transcribing/"Loading model" instead of Decoding; Whisper progress events are throttled; summarization no longer holds the GPU lock. |
 | 0.1.16 | Resilience: Whisper context is cached (no reload/OOM), GPU jobs are serialized, a GPU toggle with CPU fallback was added, and diarization recovers text from existing transcripts. |
 | 0.1.15 | Live pipeline progress: per-stage/sub-step progress events, elapsed time, and ETA for transcription, diarization, and summarization. |

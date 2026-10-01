@@ -219,8 +219,9 @@ Applications will **not** bundle large model files inside installation packages.
 - **Dropzone**: Drag-and-drop external audio files or click USB files to queue.
 - **Processing Timeline**: Visual status `[1/4] Decoding -> [2/4] STT Transcribing -> [3/4] Speaker Clustering -> [4/4] LLM Summarizing`.
   The backend emits `pipeline-progress` events (`stage`, `step`, `progress`) during decoding,
-  Whisper transcription (whisper.cpp progress callback), diarization (VAD / embeddings /
-  clustering), and summarization. The UI shows the current sub-step, elapsed time, and an ETA
+  Whisper transcription, diarization (VAD / embeddings / clustering), and summarization. Whisper's
+  C progress callback only stores into an atomic; a polling task emits the events, so no Tauri API
+  is called from the callback thread. The UI shows the current sub-step, elapsed time, and an ETA
   extrapolated from elapsed time and progress.
 - **Dual Tab View**:
   - *Tab 1: Summary Report* (rendered Markdown preview via `marked` + `DOMPurify`, a raw Markdown

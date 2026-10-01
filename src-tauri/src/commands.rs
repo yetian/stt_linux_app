@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use rusqlite::Connection;
@@ -303,6 +304,34 @@ pub async fn transcribe_recording(
     let whisper_cache = state.whisper.clone();
     let job_id = recording_id.clone();
 
+    // Whisper's progress callback runs deep inside the C library; never call
+    // Tauri APIs from it. Record progress in an atomic and poll it from a task.
+    let progress_value = Arc::new(AtomicI32::new(-1));
+    let finished = Arc::new(AtomicBool::new(false));
+
+    let poll_app = app.clone();
+    let poll_id = job_id.clone();
+    let poll_value = Arc::clone(&progress_value);
+    let poll_finished = Arc::clone(&finished);
+    let poll_task = tauri::async_runtime::spawn(async move {
+        let mut last = -1i32;
+        while !poll_finished.load(Ordering::Relaxed) {
+            let current = poll_value.load(Ordering::Relaxed);
+            if current >= 0 && current != last {
+                last = current;
+                progress::emit(
+                    &poll_app,
+                    &poll_id,
+                    "transcribing",
+                    None,
+                    Some(current as f32 / 100.0),
+                );
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+        }
+    });
+
+    let callback_value = Arc::clone(&progress_value);
     let task = tauri::async_runtime::spawn_blocking(
         move || -> AppResult<(Vec<TranscriptSegment>, f64, String)> {
             progress::emit(&app, &job_id, "decoding", None, Some(0.0));
@@ -312,22 +341,14 @@ pub async fn transcribe_recording(
             progress::emit(&app, &job_id, "transcribing", Some("loading"), None);
 
             let engine = whisper_engine(&whisper_cache, &model_path, use_gpu)?;
-            let progress_app = app.clone();
-            let progress_id = job_id.clone();
-            let mut last_percent = -1i32;
-            let segments = engine.transcribe(&samples, language.as_deref(), translate, move |value| {
-                if value == last_percent {
-                    return;
-                }
-                last_percent = value;
-                progress::emit(
-                    &progress_app,
-                    &progress_id,
-                    "transcribing",
-                    None,
-                    Some(value as f32 / 100.0),
-                );
-            })?;
+            let segments = engine.transcribe(
+                &samples,
+                language.as_deref(),
+                translate,
+                move |value| {
+                    callback_value.store(value, Ordering::Relaxed);
+                },
+            )?;
             let transcript = stt::format_transcript(&segments);
 
             Ok((segments, duration, transcript))
@@ -335,6 +356,9 @@ pub async fn transcribe_recording(
     )
     .await
     .map_err(|error| AppError::msg(format!("transcription task failed: {error}")))?;
+
+    finished.store(true, Ordering::Relaxed);
+    let _ = poll_task.await;
 
     let (segments, duration, transcript) = match task {
         Ok(value) => value,
