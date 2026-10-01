@@ -39,13 +39,26 @@ const tags = computed(() =>
 );
 const canTranscribe = computed(() => models.downloadedStt !== null);
 const canDiarize = computed(
-  () => models.downloadedDiarization !== null && segments.value.length > 0,
+  () => recording.value !== null && models.downloadedDiarization !== null,
 );
 
 watch(
   () => recording.value?.id ?? null,
   (id) => {
-    if (id) void projects.loadTags(id);
+    diarized.value = [];
+    segments.value = [];
+    if (!id) return;
+
+    void projects.loadTags(id);
+
+    const stored = recording.value?.transcript_segments;
+    if (stored) {
+      try {
+        segments.value = JSON.parse(stored) as TranscriptSegment[];
+      } catch {
+        segments.value = [];
+      }
+    }
   },
   { immediate: true },
 );
@@ -77,7 +90,7 @@ async function runTranscribe(): Promise<void> {
 async function runDiarize(): Promise<void> {
   const current = recording.value;
   const model = models.downloadedDiarization;
-  if (!current || !model || segments.value.length === 0) return;
+  if (!current || !model) return;
 
   pipeline.setStage("clustering");
   pipeline.setProgress(65);
@@ -86,7 +99,7 @@ async function runDiarize(): Promise<void> {
     diarized.value = await diarizationApi.diarize(
       current.id,
       model.path,
-      segments.value,
+      segments.value.length > 0 ? segments.value : null,
     );
     pipeline.setProgress(80);
     await projects.loadRecordings();
@@ -250,7 +263,7 @@ async function removeTag(tagId: number): Promise<void> {
             <span><i class="fa-solid fa-folder mr-1"></i>{{ t("recordings.moveTo") }}</span>
             <select
               :value="recording.project_id ?? ''"
-              class="rounded-lg border border-base-700 bg-base-850 px-2 py-1 text-xs text-slate-200 outline-none focus:border-accent-500"
+              class="select-field max-w-40"
               @change="onMoveProject"
             >
               <option value="">{{ t("recordings.noProject") }}</option>

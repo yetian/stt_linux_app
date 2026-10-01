@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS recordings (
     status TEXT CHECK(status IN ('pending', 'transcribing', 'summarizing', 'completed', 'failed')),
     transcript_raw TEXT,
     summary_markdown TEXT,
+    transcript_segments TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
 );
@@ -45,10 +46,25 @@ const PROJECT_COLUMNS: &str = "p.id, p.name, p.description, p.created_at, \
 
 const RECORDING_COLUMNS: &str = "r.id, r.project_id, r.file_name, r.source_path, \
      r.audio_duration_secs, r.detected_language, r.status, r.transcript_raw, \
-     r.summary_markdown, r.created_at";
+     r.summary_markdown, r.created_at, r.transcript_segments";
 
 pub fn init_schema(conn: &Connection) -> AppResult<()> {
     conn.execute_batch(SCHEMA)?;
+    migrate(conn)?;
+    Ok(())
+}
+
+fn migrate(conn: &Connection) -> AppResult<()> {
+    let mut statement = conn.prepare("PRAGMA table_info(recordings)")?;
+    let columns: Vec<String> = statement
+        .query_map([], |row| row.get::<_, String>(1))?
+        .filter_map(Result::ok)
+        .collect();
+
+    if !columns.iter().any(|column| column == "transcript_segments") {
+        conn.execute_batch("ALTER TABLE recordings ADD COLUMN transcript_segments TEXT;")?;
+    }
+
     Ok(())
 }
 
@@ -74,6 +90,7 @@ fn recording_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<Recording> {
         transcript_raw: row.get(7)?,
         summary_markdown: row.get(8)?,
         created_at: row.get(9)?,
+        transcript_segments: row.get(10)?,
     })
 }
 
@@ -251,6 +268,18 @@ pub fn save_transcript(conn: &Connection, recording_id: &str, transcript: &str) 
     conn.execute(
         "UPDATE recordings SET transcript_raw = ?1 WHERE id = ?2",
         params![transcript, recording_id],
+    )?;
+    Ok(())
+}
+
+pub fn save_transcript_segments(
+    conn: &Connection,
+    recording_id: &str,
+    segments_json: &str,
+) -> AppResult<()> {
+    conn.execute(
+        "UPDATE recordings SET transcript_segments = ?1 WHERE id = ?2",
+        params![segments_json, recording_id],
     )?;
     Ok(())
 }
@@ -499,6 +528,17 @@ mod tests {
         let remaining = list_tags(&conn, &recording.id).unwrap();
         assert_eq!(remaining.len(), 1);
         assert_eq!(remaining[0].tag_name, "keep");
+    }
+
+    #[test]
+    fn saves_transcript_segments() {
+        let conn = setup();
+        let recording = add_recording(&conn, &new_recording("a.mp3", None)).unwrap();
+        save_transcript_segments(&conn, &recording.id, "[]").unwrap();
+        assert_eq!(
+            get_recording(&conn, &recording.id).unwrap().transcript_segments.as_deref(),
+            Some("[]")
+        );
     }
 
     #[test]

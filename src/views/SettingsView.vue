@@ -37,7 +37,7 @@ function onProvider(event: Event): void {
         </span>
         <select
           :value="settings.audioLanguage"
-          class="rounded-lg border border-base-700 bg-base-850 px-3 py-2 text-sm text-slate-200 outline-none focus:border-accent-500"
+          class="select-field w-full"
           @change="onAudioLanguage"
         >
           <option v-for="option in AUDIO_LANGUAGE_OPTIONS" :key="option.value" :value="option.value">
@@ -65,7 +65,7 @@ function onProvider(event: Event): void {
         </span>
         <select
           :value="settings.summaryProvider"
-          class="rounded-lg border border-base-700 bg-base-850 px-3 py-2 text-sm text-slate-200 outline-none focus:border-accent-500"
+          class="select-field w-full"
           @change="onProvider"
         >
           <option v-for="provider in providers" :key="provider.value" :value="provider.value">

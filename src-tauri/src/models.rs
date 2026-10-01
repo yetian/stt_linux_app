@@ -20,6 +20,7 @@ pub struct Recording {
     pub status: String,
     pub transcript_raw: Option<String>,
     pub summary_markdown: Option<String>,
+    pub transcript_segments: Option<String>,
     pub created_at: String,
 }
 

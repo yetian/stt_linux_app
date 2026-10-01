@@ -5,7 +5,7 @@ export const diarizationApi = {
   diarize: (
     recordingId: string,
     embeddingModelPath: string,
-    segments: TranscriptSegment[],
+    segments: TranscriptSegment[] | null = null,
     threshold = 0.35,
   ) =>
     invoke<DiarizedSegment[]>("diarize_recording", {

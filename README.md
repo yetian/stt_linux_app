@@ -193,6 +193,7 @@ git push origin HEAD
 
 | Version | Changes |
 | --- | --- |
+| 0.1.12 | Transcript segments persisted; "Identify speakers" enabled when a transcript OR file exists; compact elegant dropdowns. |
 | 0.1.11 | Workspace fills the viewport; the transcript/summary panel scrolls internally. |
 | 0.1.10 | Transcript timeline is now the first/default tab; compact dropzone. |
 | 0.1.9 | On Device list: smaller text, date/duration/size/path metadata, fixed-height scroll; duration is probed per file. |

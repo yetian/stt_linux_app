@@ -83,6 +83,9 @@ v
 3. **Clustering**: Calculates cosine similarity distance matrix across voice embedding vectors and applies Agglomerative Hierarchical Clustering (AHC) in Rust to label speakers as `Speaker 0`, `Speaker 1`, etc.
 4. **Alignment**: Merges speaker boundaries with Whisper STT time intervals to produce structured transcript:
    `[00:01:12] Speaker 0: "Hello everyone, let's start the meeting."`
+   - Persisted Whisper segments (`recordings.transcript_segments`) are reused when the frontend does
+     not supply them, so diarization works across restarts. If no transcript exists, the speaker
+     turns are returned without text (speaker-only timeline).
 
 ### Module 5: LLM Summarization Client (`src-tauri/src/llm/client.rs`)
 - Sends HTTP POST requests to Ollama API (`http://127.0.0.1:11434/api/generate`) or custom OpenAI endpoints.
@@ -120,6 +123,7 @@ CREATE TABLE IF NOT EXISTS recordings (
     status TEXT CHECK(status IN ('pending', 'transcribing', 'summarizing', 'completed', 'failed')),
     transcript_raw TEXT,
     summary_markdown TEXT,
+    transcript_segments TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
 );

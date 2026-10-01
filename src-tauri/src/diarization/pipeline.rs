@@ -75,6 +75,18 @@ pub fn diarize(
 }
 
 pub fn align(segments: &[TranscriptSegment], turns: &[SpeakerTurn]) -> Vec<DiarizedSegment> {
+    if segments.is_empty() {
+        return turns
+            .iter()
+            .map(|turn| DiarizedSegment {
+                start_ms: turn.start_ms,
+                end_ms: turn.end_ms,
+                speaker: turn.speaker,
+                text: String::new(),
+            })
+            .collect();
+    }
+
     segments
         .iter()
         .map(|segment| {
@@ -168,6 +180,19 @@ mod tests {
         assert_eq!(aligned[0].speaker, 0);
         assert_eq!(aligned[1].speaker, 1);
         assert_eq!(aligned[0].text, "a");
+    }
+
+    #[test]
+    fn alignment_without_segments_uses_turns() {
+        let turns = vec![SpeakerTurn {
+            start_ms: 0,
+            end_ms: 1_000,
+            speaker: 3,
+        }];
+        let aligned = align(&[], &turns);
+        assert_eq!(aligned.len(), 1);
+        assert_eq!(aligned[0].speaker, 3);
+        assert!(aligned[0].text.is_empty());
     }
 
     #[test]

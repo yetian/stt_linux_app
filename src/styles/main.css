@@ -63,3 +63,13 @@
     background-color: var(--color-base-600);
   }
 }
+
+@layer components {
+  .select-field {
+    @apply appearance-none rounded-lg border border-base-700 bg-base-850 py-1.5 pr-8 pl-3 text-xs text-slate-200 outline-none transition-colors hover:border-base-600 focus:border-accent-500;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.55rem center;
+    background-size: 0.7rem;
+  }
+}

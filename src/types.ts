@@ -63,6 +63,7 @@ export interface Recording {
   status: RecordingStatus;
   transcript_raw: string | null;
   summary_markdown: string | null;
+  transcript_segments: string | null;
   created_at: string;
 }
 

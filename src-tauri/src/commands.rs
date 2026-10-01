@@ -281,10 +281,14 @@ pub async fn transcribe_recording(
         }
     };
 
+    let segments_json = serde_json::to_string(&segments)
+        .map_err(|error| AppError::msg(format!("failed to serialize segments: {error}")))?;
+
     {
         let conn = state.connection();
         pm::update_recording_metadata(&conn, &recording_id, Some(duration), None)?;
         pm::save_transcript(&conn, &recording_id, &transcript)?;
+        pm::save_transcript_segments(&conn, &recording_id, &segments_json)?;
         pm::update_recording_status(&conn, &recording_id, "pending")?;
     }
 
@@ -296,12 +300,21 @@ pub async fn diarize_recording(
     state: State<'_, AppState>,
     recording_id: String,
     embedding_model_path: String,
-    segments: Vec<TranscriptSegment>,
+    segments: Option<Vec<TranscriptSegment>>,
     threshold: Option<f32>,
 ) -> AppResult<Vec<DiarizedSegment>> {
-    let source_path = {
+    let (source_path, stored_segments) = {
         let conn = state.connection();
-        pm::get_recording(&conn, &recording_id)?.source_path
+        let recording = pm::get_recording(&conn, &recording_id)?;
+        (recording.source_path, recording.transcript_segments)
+    };
+
+    let segments = match segments {
+        Some(provided) if !provided.is_empty() => provided,
+        _ => stored_segments
+            .as_deref()
+            .and_then(|json| serde_json::from_str::<Vec<TranscriptSegment>>(json).ok())
+            .unwrap_or_default(),
     };
 
     let threshold = threshold.unwrap_or(0.35);
@@ -320,9 +333,9 @@ pub async fn diarize_recording(
 
     let turns = task?;
     let aligned = diarization::align(&segments, &turns);
-    let formatted = diarization::format_diarized(&aligned);
 
-    {
+    if aligned.iter().any(|segment| !segment.text.is_empty()) {
+        let formatted = diarization::format_diarized(&aligned);
         let conn = state.connection();
         pm::save_transcript(&conn, &recording_id, &formatted)?;
     }

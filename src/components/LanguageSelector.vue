@@ -28,10 +28,7 @@ const selected = computed({
     <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
       <i class="fa-solid fa-globe mr-1"></i>{{ t("language.ui") }}
     </span>
-    <select
-      v-model="selected"
-      class="w-full rounded-lg border border-base-700 bg-base-850 px-3 py-2 text-sm text-slate-200 outline-none transition-colors hover:border-base-600 focus:border-accent-500"
-    >
+    <select v-model="selected" class="select-field w-full">
       <option v-for="option in options" :key="option.value" :value="option.value">
         {{ option.label }}
       </option>
