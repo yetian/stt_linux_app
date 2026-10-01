@@ -80,6 +80,7 @@
   },
   "recordings": {
     "empty": "No recordings yet",
+    "add": "Add to recordings",
     "renameTitle": "Rename recording",
     "renameLabel": "File name",
     "deleteTitle": "Delete recording",

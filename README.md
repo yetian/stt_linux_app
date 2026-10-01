@@ -193,6 +193,8 @@ git push origin HEAD
 
 | Version | Changes |
 | --- | --- |
+| 0.1.8 | Device file list: only the `+` button adds a file (row is not clickable). |
+| 0.1.7 | Documented versioning + git workflow; README changelog and design section 9. |
 | 0.1.6 | Dropzone click opens the native file picker (`tauri-plugin-dialog`). |
 | 0.1.5 | Fixed the Cam++ diarization model URL (the previous source returned 401). |
 | 0.1.4 | Replaced unicode icons with Font Awesome. |

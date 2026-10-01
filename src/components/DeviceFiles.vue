@@ -25,17 +25,22 @@ async function add(file: RecorderFile): Promise<void> {
       <i class="fa-solid fa-usb mr-1"></i>{{ t("nav.deviceFiles") }}
     </span>
 
-    <button
+    <div
       v-for="file in device.files"
       :key="file.path"
-      type="button"
-      class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-base-850"
-      @click="add(file)"
+      class="flex items-center justify-between gap-2 rounded-lg px-3 py-2"
     >
       <span class="min-w-0 flex-1 truncate text-sm text-slate-300">
         <i class="fa-solid fa-music mr-1 text-base-500"></i>{{ file.name }}
       </span>
-      <span class="text-[11px] text-accent-400"><i class="fa-solid fa-plus"></i></span>
-    </button>
+      <button
+        type="button"
+        class="shrink-0 rounded-md p-1 text-accent-400 transition-colors hover:bg-base-800 hover:text-accent-300"
+        :title="t('recordings.add')"
+        @click.stop="add(file)"
+      >
+        <i class="fa-solid fa-plus"></i>
+      </button>
+    </div>
   </div>
 </template>

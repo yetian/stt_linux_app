@@ -80,6 +80,7 @@
   },
   "recordings": {
     "empty": "暂无录音",
+    "add": "添加到录音",
     "renameTitle": "重命名录音",
     "renameLabel": "文件名",
     "deleteTitle": "删除录音",

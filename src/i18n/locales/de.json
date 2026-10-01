@@ -80,6 +80,7 @@
   },
   "recordings": {
     "empty": "Noch keine Aufnahmen",
+    "add": "Zu Aufnahmen hinzufügen",
     "renameTitle": "Aufnahme umbenennen",
     "renameLabel": "Dateiname",
     "deleteTitle": "Aufnahme löschen",
