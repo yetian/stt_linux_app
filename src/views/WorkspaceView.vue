@@ -166,7 +166,7 @@ async function removeTag(tagId: number): Promise<void> {
 </script>
 
 <template>
-  <div class="mx-auto flex max-w-5xl flex-col gap-5 px-6 py-6">
+  <div class="mx-auto flex h-full max-w-5xl flex-col gap-5 px-6 py-6">
     <Dropzone />
 
     <ProcessingTimeline />
@@ -295,8 +295,8 @@ async function removeTag(tagId: number): Promise<void> {
         </div>
       </div>
 
-      <section class="rounded-2xl border border-base-800 bg-base-900">
-        <div class="flex items-center gap-1 border-b border-base-800 p-2">
+      <section class="flex min-h-0 flex-1 flex-col rounded-2xl border border-base-800 bg-base-900">
+        <div class="flex shrink-0 items-center gap-1 border-b border-base-800 p-2">
           <button
             v-for="tab in (['transcript', 'summary'] as const)"
             :key="tab"
@@ -313,7 +313,7 @@ async function removeTag(tagId: number): Promise<void> {
           </button>
         </div>
 
-        <div class="p-4">
+        <div class="min-h-0 flex-1 overflow-y-auto p-4">
           <SummaryPanel
             v-if="activeTab === 'summary'"
             :markdown="recording.summary_markdown"

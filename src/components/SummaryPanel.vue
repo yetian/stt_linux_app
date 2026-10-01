@@ -9,7 +9,7 @@ const { t } = useI18n();
 <template>
   <div
     v-if="markdown"
-    class="prose-invert max-h-[60vh] overflow-y-auto rounded-xl bg-base-850 p-5 text-sm leading-relaxed whitespace-pre-wrap text-slate-300"
+    class="prose-invert rounded-xl bg-base-850 p-5 text-sm leading-relaxed whitespace-pre-wrap text-slate-300"
   >
     {{ markdown }}
   </div>

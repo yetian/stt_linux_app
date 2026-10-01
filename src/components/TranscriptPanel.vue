@@ -29,7 +29,7 @@ function formatTime(milliseconds: number): string {
 </script>
 
 <template>
-  <div v-if="hasDiarized" class="flex max-h-[60vh] flex-col gap-3 overflow-y-auto">
+  <div v-if="hasDiarized" class="flex flex-col gap-3">
     <div
       v-for="(segment, index) in diarized"
       :key="index"
@@ -52,7 +52,7 @@ function formatTime(milliseconds: number): string {
 
   <div
     v-else-if="transcript"
-    class="max-h-[60vh] overflow-y-auto rounded-xl bg-base-850 p-5 font-mono text-xs leading-relaxed whitespace-pre-wrap text-slate-300"
+    class="rounded-xl bg-base-850 p-5 font-mono text-xs leading-relaxed whitespace-pre-wrap text-slate-300"
   >
     {{ transcript }}
   </div>

@@ -38,7 +38,7 @@ onMounted(async () => {
     <AppSidebar class="hidden w-72 shrink-0 md:flex" />
     <div class="flex min-w-0 flex-1 flex-col">
       <AppHeader />
-      <main class="min-h-0 flex-1 overflow-y-auto">
+      <main class="min-h-0 flex-1 overflow-hidden">
         <WorkspaceView v-if="ui.activeView === 'workspace'" />
         <ModelsView v-else-if="ui.activeView === 'models'" />
         <SettingsView v-else />

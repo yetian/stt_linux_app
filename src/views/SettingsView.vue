@@ -23,7 +23,7 @@ function onProvider(event: Event): void {
 </script>
 
 <template>
-  <div class="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-6">
+  <div class="mx-auto flex h-full max-w-3xl flex-col gap-6 overflow-y-auto px-6 py-6">
     <h1 class="text-lg font-semibold text-slate-100">
       <i class="fa-solid fa-gear mr-1 text-accent-400"></i>{{ t("nav.settings") }}
     </h1>

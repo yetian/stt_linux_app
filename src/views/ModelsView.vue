@@ -40,7 +40,7 @@ function percent(model: ModelStatus): number {
 </script>
 
 <template>
-  <div class="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-6">
+  <div class="mx-auto flex h-full max-w-4xl flex-col gap-6 overflow-y-auto px-6 py-6">
     <header>
       <h1 class="text-lg font-semibold text-slate-100">
         <i class="fa-solid fa-brain mr-1 text-accent-400"></i>{{ t("models.title") }}
