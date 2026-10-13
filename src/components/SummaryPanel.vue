@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { save } from "@tauri-apps/plugin-dialog";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
+import { systemApi } from "@/api/system";
 
-const props = defineProps<{ markdown?: string | null }>();
+const props = defineProps<{ markdown?: string | null; fileName?: string | null }>();
 
 const { t } = useI18n();
 
 const view = ref<"preview" | "markdown">("preview");
 const copied = ref(false);
+const downloading = ref(false);
 
 const html = computed(() =>
   props.markdown
@@ -27,6 +30,29 @@ async function copy(): Promise<void> {
     }, 1500);
   } catch {
     copied.value = false;
+  }
+}
+
+async function download(): Promise<void> {
+  if (!props.markdown) return;
+  downloading.value = true;
+  try {
+    const stem = (props.fileName ?? "summary").replace(/\.[^./\\]+$/, "");
+    const now = new Date();
+    const pad = (value: number) => String(value).padStart(2, "0");
+    const stamp =
+      `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}` +
+      `-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+    const target = await save({
+      defaultPath: `${stem}_summary_${stamp}.md`,
+      filters: [{ name: "Markdown", extensions: ["md"] }],
+    });
+
+    if (!target) return;
+    await systemApi.writeTextFile(target, props.markdown);
+  } finally {
+    downloading.value = false;
   }
 }
 </script>
@@ -53,15 +79,25 @@ async function copy(): Promise<void> {
         </button>
       </div>
 
-      <button
-        type="button"
-        class="rounded-lg border border-base-700 bg-base-850 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-accent-500 hover:text-slate-100"
-        @click="copy"
-      >
-        <i v-if="copied" class="fa-solid fa-check mr-1 text-emerald-400"></i>
-        <i v-else class="fa-solid fa-copy mr-1"></i>
-        {{ copied ? t("summary.copied") : t("summary.copy") }}
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="rounded-lg border border-base-700 bg-base-850 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-accent-500 hover:text-slate-100"
+          @click="copy"
+        >
+          <i v-if="copied" class="fa-solid fa-check mr-1 text-emerald-400"></i>
+          <i v-else class="fa-solid fa-copy mr-1"></i>
+          {{ copied ? t("summary.copied") : t("summary.copy") }}
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border border-base-700 bg-base-850 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-accent-500 hover:text-slate-100 disabled:opacity-40"
+          :disabled="downloading"
+          @click="download"
+        >
+          <i class="fa-solid fa-download mr-1"></i>{{ t("summary.download") }}
+        </button>
+      </div>
     </div>
 
     <div

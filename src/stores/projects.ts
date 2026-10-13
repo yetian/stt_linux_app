@@ -146,6 +146,10 @@ export const useProjectsStore = defineStore("projects", () => {
     return tagsByRecording.value[recordingId] ?? [];
   }
 
+  function hasRecordingWithPath(path: string): boolean {
+    return recordings.value.some((recording) => recording.source_path === path);
+  }
+
   const AUDIO_EXTENSIONS = [".mp3", ".wav", ".m4a", ".aac", ".flac"];
 
   function isAudioPath(path: string): boolean {
@@ -266,6 +270,7 @@ export const useProjectsStore = defineStore("projects", () => {
     addTag,
     removeTag,
     recordingTags,
+    hasRecordingWithPath,
     search,
     setActiveRecording,
   };

@@ -78,7 +78,8 @@
     "preview": "Vorschau",
     "markdown": "Markdown",
     "copy": "Als Markdown kopieren",
-    "copied": "Kopiert"
+    "copied": "Kopiert",
+    "download": ".md herunterladen"
   },
   "transcript": {
     "empty": "Noch kein Transkript verfügbar.",
@@ -94,6 +95,7 @@
   "recordings": {
     "empty": "Noch keine Aufnahmen",
     "add": "Zu Aufnahmen hinzufügen",
+    "added": "Bereits hinzugefügt",
     "renameTitle": "Aufnahme umbenennen",
     "renameLabel": "Dateiname",
     "deleteTitle": "Aufnahme löschen",

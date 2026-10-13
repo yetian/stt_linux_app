@@ -21,6 +21,9 @@ pub struct Recording {
     pub transcript_raw: Option<String>,
     pub summary_markdown: Option<String>,
     pub transcript_segments: Option<String>,
+    pub recorded_at: Option<i64>,
+    pub transcribed_at: Option<String>,
+    pub summarized_at: Option<String>,
     pub created_at: String,
 }
 
@@ -37,4 +40,5 @@ pub struct NewRecording {
     pub source_path: String,
     pub project_id: Option<String>,
     pub audio_duration_secs: Option<f64>,
+    pub recorded_at: Option<i64>,
 }

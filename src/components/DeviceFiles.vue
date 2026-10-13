@@ -14,8 +14,13 @@ async function add(file: RecorderFile): Promise<void> {
     source_path: file.path,
     project_id: projects.activeProjectId,
     audio_duration_secs: file.duration_secs,
+    recorded_at: file.modified_at,
   });
   await projects.loadProjects();
+}
+
+function added(path: string): boolean {
+  return projects.hasRecordingWithPath(path);
 }
 
 function formatDuration(seconds: number | null): string {
@@ -71,11 +76,17 @@ function metadata(file: RecorderFile): string {
         </div>
         <button
           type="button"
-          class="shrink-0 rounded-md p-1 text-accent-400 transition-colors hover:bg-base-800 hover:text-accent-300"
-          :title="t('recordings.add')"
+          class="shrink-0 rounded-md p-1 transition-colors"
+          :class="
+            added(file.path)
+              ? 'cursor-default text-emerald-400'
+              : 'text-accent-400 hover:bg-base-800 hover:text-accent-300'
+          "
+          :title="added(file.path) ? t('recordings.added') : t('recordings.add')"
+          :disabled="added(file.path)"
           @click.stop="add(file)"
         >
-          <i class="fa-solid fa-plus"></i>
+          <i :class="added(file.path) ? 'fa-solid fa-circle-check' : 'fa-solid fa-plus'"></i>
         </button>
       </div>
     </div>

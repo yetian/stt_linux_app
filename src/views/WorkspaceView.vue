@@ -350,6 +350,7 @@ async function removeTag(tagId: number): Promise<void> {
           <SummaryPanel
             v-if="activeTab === 'summary'"
             :markdown="recording.summary_markdown"
+            :file-name="recording.file_name"
           />
           <TranscriptPanel
             v-else

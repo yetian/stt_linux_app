@@ -78,7 +78,8 @@
     "preview": "Preview",
     "markdown": "Markdown",
     "copy": "Copy as Markdown",
-    "copied": "Copied"
+    "copied": "Copied",
+    "download": "Download .md"
   },
   "transcript": {
     "empty": "No transcript available yet.",
@@ -94,6 +95,7 @@
   "recordings": {
     "empty": "No recordings yet",
     "add": "Add to recordings",
+    "added": "Already added",
     "renameTitle": "Rename recording",
     "renameLabel": "File name",
     "deleteTitle": "Delete recording",

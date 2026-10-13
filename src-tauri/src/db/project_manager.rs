@@ -27,6 +27,9 @@ CREATE TABLE IF NOT EXISTS recordings (
     transcript_raw TEXT,
     summary_markdown TEXT,
     transcript_segments TEXT,
+    recorded_at INTEGER,
+    transcribed_at DATETIME,
+    summarized_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
 );
@@ -53,7 +56,8 @@ const PROJECT_COLUMNS: &str = "p.id, p.name, p.description, p.created_at, \
 
 const RECORDING_COLUMNS: &str = "r.id, r.project_id, r.file_name, r.source_path, \
      r.audio_duration_secs, r.detected_language, r.status, r.transcript_raw, \
-     r.summary_markdown, r.created_at, r.transcript_segments";
+     r.summary_markdown, r.created_at, r.transcript_segments, \
+     r.recorded_at, r.transcribed_at, r.summarized_at";
 
 pub fn init_schema(conn: &Connection) -> AppResult<()> {
     conn.execute_batch(SCHEMA)?;
@@ -68,8 +72,17 @@ fn migrate(conn: &Connection) -> AppResult<()> {
         .filter_map(Result::ok)
         .collect();
 
-    if !columns.iter().any(|column| column == "transcript_segments") {
-        conn.execute_batch("ALTER TABLE recordings ADD COLUMN transcript_segments TEXT;")?;
+    for (column, definition) in [
+        ("transcript_segments", "TEXT"),
+        ("recorded_at", "INTEGER"),
+        ("transcribed_at", "DATETIME"),
+        ("summarized_at", "DATETIME"),
+    ] {
+        if !columns.iter().any(|existing| existing == column) {
+            conn.execute_batch(&format!(
+                "ALTER TABLE recordings ADD COLUMN {column} {definition};"
+            ))?;
+        }
     }
 
     Ok(())
@@ -98,6 +111,9 @@ fn recording_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<Recording> {
         summary_markdown: row.get(8)?,
         created_at: row.get(9)?,
         transcript_segments: row.get(10)?,
+        recorded_at: row.get(11)?,
+        transcribed_at: row.get(12)?,
+        summarized_at: row.get(13)?,
     })
 }
 
@@ -147,18 +163,36 @@ pub fn delete_project(conn: &Connection, id: &str) -> AppResult<()> {
 pub fn add_recording(conn: &Connection, input: &NewRecording) -> AppResult<Recording> {
     let id = Uuid::new_v4().to_string();
     conn.execute(
-        "INSERT INTO recordings (id, project_id, file_name, source_path, audio_duration_secs, status) \
-         VALUES (?1, ?2, ?3, ?4, ?5, 'pending')",
+        "INSERT INTO recordings \
+         (id, project_id, file_name, source_path, audio_duration_secs, recorded_at, status) \
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'pending')",
         params![
             id,
             input.project_id,
             input.file_name,
             input.source_path,
-            input.audio_duration_secs
+            input.audio_duration_secs,
+            input.recorded_at
         ],
     )?;
 
     get_recording(conn, &id)
+}
+
+pub fn mark_transcribed(conn: &Connection, recording_id: &str) -> AppResult<()> {
+    conn.execute(
+        "UPDATE recordings SET transcribed_at = CURRENT_TIMESTAMP WHERE id = ?1",
+        params![recording_id],
+    )?;
+    Ok(())
+}
+
+pub fn mark_summarized(conn: &Connection, recording_id: &str) -> AppResult<()> {
+    conn.execute(
+        "UPDATE recordings SET summarized_at = CURRENT_TIMESTAMP WHERE id = ?1",
+        params![recording_id],
+    )?;
+    Ok(())
 }
 
 pub fn get_recording(conn: &Connection, id: &str) -> AppResult<Recording> {
@@ -416,6 +450,7 @@ mod tests {
             source_path: format!("/tmp/{file_name}"),
             project_id,
             audio_duration_secs: None,
+            recorded_at: None,
         }
     }
 
@@ -597,6 +632,21 @@ mod tests {
         assert_eq!(loaded.get("summaryProvider").map(String::as_str), Some("openai"));
         assert_eq!(loaded.get("ollamaModel").map(String::as_str), Some("qwen2.5:14b"));
         assert_eq!(loaded.len(), 2);
+    }
+
+    #[test]
+    fn marks_transcribed_and_summarized() {
+        let conn = setup();
+        let recording = add_recording(&conn, &new_recording("a.mp3", None)).unwrap();
+        assert!(recording.transcribed_at.is_none());
+        assert!(recording.summarized_at.is_none());
+
+        mark_transcribed(&conn, &recording.id).unwrap();
+        mark_summarized(&conn, &recording.id).unwrap();
+
+        let fetched = get_recording(&conn, &recording.id).unwrap();
+        assert!(fetched.transcribed_at.is_some());
+        assert!(fetched.summarized_at.is_some());
     }
 
     #[test]

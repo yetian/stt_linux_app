@@ -2,6 +2,7 @@
 import { useI18n } from "vue-i18n";
 import { useProjectsStore } from "@/stores/projects";
 import { useUiStore } from "@/stores/ui";
+import type { Recording } from "@/types";
 
 const { t } = useI18n();
 const projects = useProjectsStore();
@@ -19,6 +20,37 @@ function select(recordingId: string): void {
   projects.setActiveRecording(recordingId);
   ui.setView("workspace");
 }
+
+function formatDuration(seconds: number | null): string {
+  if (seconds === null || !Number.isFinite(seconds)) return "";
+  const total = Math.round(seconds);
+  const minutes = Math.floor(total / 60);
+  const secs = total % 60;
+  return `${minutes}:${String(secs).padStart(2, "0")}`;
+}
+
+function formatEpoch(seconds: number | null): string {
+  if (seconds === null) return "";
+  return new Date(seconds * 1000).toLocaleDateString();
+}
+
+function parseSqliteTime(value: string | null): Date | null {
+  if (!value) return null;
+  const normalized = value.includes("T") ? value : value.replace(" ", "T");
+  const date = new Date(`${normalized}Z`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatStamp(value: string | null): string {
+  const date = parseSqliteTime(value);
+  return date ? date.toLocaleDateString() : "";
+}
+
+function recordedLine(recording: Recording): string {
+  return [formatEpoch(recording.recorded_at), formatDuration(recording.audio_duration_secs)]
+    .filter((part) => part !== "")
+    .join(" · ");
+}
 </script>
 
 <template>
@@ -31,28 +63,40 @@ function select(recordingId: string): void {
       {{ t("recordings.empty") }}
     </p>
 
-    <button
-      v-for="recording in projects.recordings"
-      :key="recording.id"
-      type="button"
-      class="flex items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors"
-      :class="
-        projects.activeRecordingId === recording.id
-          ? 'bg-base-800'
-          : 'hover:bg-base-850'
-      "
-      @click="select(recording.id)"
-    >
-      <span
-        class="size-2 shrink-0 rounded-full"
-        :class="STATUS_COLOR[recording.status] ?? 'bg-base-500'"
-      />
-      <span class="min-w-0 flex-1">
-        <span class="block truncate text-sm text-slate-300">{{ recording.file_name }}</span>
-        <span class="block truncate text-[11px] text-base-500">
-          {{ t(`status.${recording.status}`) }}
+    <div class="max-h-96 overflow-y-auto pr-1">
+      <button
+        v-for="recording in projects.recordings"
+        :key="recording.id"
+        type="button"
+        class="flex w-full items-start gap-2 rounded-lg px-3 py-2 text-left transition-colors"
+        :class="
+          projects.activeRecordingId === recording.id ? 'bg-base-800' : 'hover:bg-base-850'
+        "
+        @click="select(recording.id)"
+      >
+        <span
+          class="mt-1.5 size-2 shrink-0 rounded-full"
+          :class="STATUS_COLOR[recording.status] ?? 'bg-base-500'"
+        />
+        <span class="min-w-0 flex-1">
+          <span class="block truncate text-xs text-slate-300">{{ recording.file_name }}</span>
+          <span v-if="recordedLine(recording)" class="block truncate text-[10px] text-base-500">
+            <i class="fa-regular fa-calendar mr-1"></i>{{ recordedLine(recording) }}
+          </span>
+          <span class="mt-0.5 flex flex-wrap items-center gap-x-2 text-[10px] text-base-500">
+            <span>{{ t(`status.${recording.status}`) }}</span>
+            <span v-if="recording.transcribed_at">
+              <i class="fa-solid fa-file-pen mr-1"></i>{{ formatStamp(recording.transcribed_at) }}
+            </span>
+            <span v-if="recording.summarized_at">
+              <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>{{ formatStamp(recording.summarized_at) }}
+            </span>
+          </span>
+          <span class="block truncate font-mono text-[10px] text-base-600" :title="recording.source_path">
+            {{ recording.source_path }}
+          </span>
         </span>
-      </span>
-    </button>
+      </button>
+    </div>
   </div>
 </template>

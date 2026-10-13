@@ -134,6 +134,9 @@ CREATE TABLE IF NOT EXISTS recordings (
     transcript_raw TEXT,
     summary_markdown TEXT,
     transcript_segments TEXT,
+    recorded_at INTEGER,
+    transcribed_at DATETIME,
+    summarized_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
 );

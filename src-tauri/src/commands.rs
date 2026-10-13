@@ -79,10 +79,30 @@ pub fn delete_project(state: State<'_, AppState>, project_id: String) -> AppResu
     pm::delete_project(&conn, &project_id)
 }
 
+fn file_modified_secs(path: &str) -> Option<i64> {
+    std::fs::metadata(path)
+        .and_then(|meta| meta.modified())
+        .ok()
+        .and_then(|time| time.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|duration| duration.as_secs() as i64)
+}
+
 #[tauri::command]
-pub fn add_recording(state: State<'_, AppState>, input: NewRecording) -> AppResult<Recording> {
+pub fn add_recording(state: State<'_, AppState>, mut input: NewRecording) -> AppResult<Recording> {
+    if input.recorded_at.is_none() {
+        input.recorded_at = file_modified_secs(&input.source_path);
+    }
     let conn = state.connection();
     pm::add_recording(&conn, &input)
+}
+
+#[tauri::command]
+pub fn write_text_file(path: String, contents: String) -> AppResult<()> {
+    if let Some(parent) = Path::new(&path).parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(&path, contents)?;
+    Ok(())
 }
 
 #[tauri::command]
@@ -263,6 +283,7 @@ pub async fn summarize_recording(
     {
         let conn = state.connection();
         pm::save_summary(&conn, &recording_id, &summary)?;
+        pm::mark_summarized(&conn, &recording_id)?;
         pm::update_recording_status(&conn, &recording_id, "completed")?;
     }
 
@@ -378,6 +399,7 @@ pub async fn transcribe_recording(
         pm::update_recording_metadata(&conn, &recording_id, Some(duration), None)?;
         pm::save_transcript(&conn, &recording_id, &transcript)?;
         pm::save_transcript_segments(&conn, &recording_id, &segments_json)?;
+        pm::mark_transcribed(&conn, &recording_id)?;
         pm::update_recording_status(&conn, &recording_id, "pending")?;
     }
 

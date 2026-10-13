@@ -64,6 +64,9 @@ export interface Recording {
   transcript_raw: string | null;
   summary_markdown: string | null;
   transcript_segments: string | null;
+  recorded_at: number | null;
+  transcribed_at: string | null;
+  summarized_at: string | null;
   created_at: string;
 }
 
@@ -72,6 +75,7 @@ export interface NewRecording {
   source_path: string;
   project_id: string | null;
   audio_duration_secs: number | null;
+  recorded_at?: number | null;
 }
 
 export interface Tag {

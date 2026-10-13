@@ -73,6 +73,7 @@ pub fn run() {
             commands::list_projects,
             commands::delete_project,
             commands::add_recording,
+            commands::write_text_file,
             commands::list_recordings,
             commands::search_recordings,
             commands::assign_recording_to_project,
