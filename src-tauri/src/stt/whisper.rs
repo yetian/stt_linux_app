@@ -84,9 +84,14 @@ impl WhisperEngine {
 
         let mut segments = Vec::with_capacity(count as usize);
         for index in 0..count {
-            let text = state
-                .full_get_segment_text(index)
-                .map_err(|error| AppError::msg(format!("failed to read segment text: {error}")))?;
+            // Whisper can emit bytes that are not valid UTF-8 (partial multibyte
+            // token sequences). Read the raw bytes and decode lossily so a single
+            // bad segment cannot abort the whole transcription.
+            let bytes = state
+                .full_get_segment_bytes(index)
+                .map_err(|error| AppError::msg(format!("failed to read segment: {error}")))?;
+            let text = String::from_utf8_lossy(&bytes);
+
             let start = state
                 .full_get_segment_t0(index)
                 .map_err(|error| AppError::msg(format!("failed to read segment start: {error}")))?;
