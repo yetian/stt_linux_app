@@ -34,3 +34,25 @@ impl Serialize for AppError {
 }
 
 pub type AppResult<T> = Result<T, AppError>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn message_error_displays_literal_text() {
+        assert_eq!(AppError::msg("something broke").to_string(), "something broke");
+    }
+
+    #[test]
+    fn io_error_is_wrapped_with_prefix() {
+        let error: AppError = std::io::Error::new(std::io::ErrorKind::NotFound, "nope").into();
+        assert!(error.to_string().starts_with("io error:"));
+    }
+
+    #[test]
+    fn serializes_as_plain_string() {
+        let json = serde_json::to_string(&AppError::msg("boom")).unwrap();
+        assert_eq!(json, "\"boom\"");
+    }
+}

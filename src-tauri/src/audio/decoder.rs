@@ -191,6 +191,25 @@ mod tests {
     }
 
     #[test]
+    fn decodes_wav_and_resamples_to_16k() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("tone.wav");
+        std::fs::write(&path, wav_bytes(8_000, 1)).unwrap();
+
+        let samples = decode_to_mono_16k(&path).unwrap();
+        assert!(
+            (samples.len() as i64 - 16_000).abs() <= 2,
+            "unexpected length {}",
+            samples.len()
+        );
+    }
+
+    #[test]
+    fn decode_missing_file_errors() {
+        assert!(decode_to_mono_16k(Path::new("/no/such/file.wav")).is_err());
+    }
+
+    #[test]
     fn same_rate_is_identity() {
         let input = vec![0.0, 0.5, 1.0, -0.5];
         assert_eq!(resample_linear(&input, 16_000, 16_000), input);

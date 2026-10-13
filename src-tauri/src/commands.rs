@@ -595,4 +595,14 @@ mod tests {
         assert_eq!(sanitize_stem(""), "recording");
         assert_eq!(sanitize_stem("@@@.mp3"), "___");
     }
+
+    #[test]
+    fn reads_modified_seconds_for_existing_and_missing_files() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("a.txt");
+        std::fs::write(&path, b"x").unwrap();
+
+        assert!(file_modified_secs(path.to_str().unwrap()).is_some());
+        assert!(file_modified_secs("/no/such/path").is_none());
+    }
 }

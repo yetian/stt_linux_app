@@ -106,7 +106,9 @@ fn recording_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<Recording> {
         source_path: row.get(3)?,
         audio_duration_secs: row.get(4)?,
         detected_language: row.get(5)?,
-        status: row.get(6)?,
+        status: row
+            .get::<_, Option<String>>(6)?
+            .unwrap_or_else(|| "pending".to_string()),
         transcript_raw: row.get(7)?,
         summary_markdown: row.get(8)?,
         created_at: row.get(9)?,
@@ -647,6 +649,43 @@ mod tests {
         let fetched = get_recording(&conn, &recording.id).unwrap();
         assert!(fetched.transcribed_at.is_some());
         assert!(fetched.summarized_at.is_some());
+    }
+
+    #[test]
+    fn migrates_legacy_recordings_table() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE projects (
+                 id TEXT PRIMARY KEY,
+                 name TEXT NOT NULL,
+                 description TEXT,
+                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+             );
+             CREATE TABLE recordings (
+                 id TEXT PRIMARY KEY,
+                 project_id TEXT,
+                 file_name TEXT NOT NULL,
+                 source_path TEXT NOT NULL,
+                 audio_duration_secs REAL,
+                 detected_language TEXT,
+                 status TEXT,
+                 transcript_raw TEXT,
+                 summary_markdown TEXT,
+                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+             );
+             INSERT INTO recordings (id, file_name, source_path)
+             VALUES ('r1', 'a.mp3', '/x/a.mp3');",
+        )
+        .unwrap();
+
+        init_schema(&conn).unwrap();
+
+        let recording = get_recording(&conn, "r1").unwrap();
+        assert_eq!(recording.file_name, "a.mp3");
+        assert!(recording.transcript_segments.is_none());
+        assert!(recording.recorded_at.is_none());
+        assert!(recording.transcribed_at.is_none());
+        assert!(recording.summarized_at.is_none());
     }
 
     #[test]
