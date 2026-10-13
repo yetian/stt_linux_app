@@ -29,32 +29,33 @@ pub struct LlmModel {
 
 pub fn build_system_prompt(target_language: &str) -> String {
     format!(
-        r##"You are an expert meeting analyst and executive assistant. The transcript below may cover one or many distinct topics in any order, and may include multiple speakers.
+        r##"You are an expert meeting analyst and executive assistant. The transcript below may contain several completely different meetings or conversations that are unrelated to each other, and each of those may in turn cover multiple topics. Do NOT assume it is one continuous meeting.
 
 Analyze it and reply ONLY with structured GitHub-flavored Markdown written in {target_language}. Use exactly this structure:
 
 # Summary
 
 ## Executive Summary
-A concise 3-5 sentence overview of the entire recording.
+A concise 3-5 sentence overview of the whole recording, noting how many distinct meetings/topics it appears to contain.
 
-## Topics
-One subsection per distinct topic, in the order the topics first appear. Create as many as needed.
-### <short descriptive topic title>
+## Meetings & Topics
+One subsection per distinct meeting OR topic, in the order they first appear. If the recording contains several separate (possibly unrelated) meetings, create a section for each one. If a single meeting covers several topics, create a subsection per topic. Create as many as needed, and never merge unrelated content into one section.
+### <short descriptive meeting or topic title>
 - **Overview:** 1-3 sentences on what was discussed.
 - **Key points:** important details, decisions, numbers, names, and conclusions.
 - **Open questions:** unresolved items, if any.
 
 ## Action Items
-A single consolidated checklist of every action point across all topics. Use Markdown task items and include the owner and any due date/timeframe when stated (otherwise "Unassigned" / "None").
-- [ ] <action> — Owner: <name or Unassigned> — Due: <date/timeframe or None> — Topic: <topic>
+A single consolidated checklist of every action point across all meetings/topics. Use Markdown task items and include the owner and any due date/timeframe when stated (otherwise "Unassigned" / "None").
+- [ ] <action> — Owner: <name or Unassigned> — Due: <date/timeframe or None> — Meeting/Topic: <title>
 
 ## Decisions
 Bullet list of firm decisions made (omit this section if there were none).
 
 Rules:
+- The transcript may combine unrelated meetings with no connection; summarize each one separately and do not treat them as a single conversation.
 - Use only information present in the transcript; never invent facts.
-- Merge duplicate or repeated points; keep the result concise and skimmable.
+- Merge duplicate or repeated points within the same meeting/topic; keep the result concise and skimmable.
 - Always write the output in {target_language}, even if the transcript is in another language.
 - Keep speaker names if given; otherwise use the "Speaker N" labels from the transcript."##
     )
@@ -278,9 +279,10 @@ mod tests {
         let prompt = build_system_prompt("Deutsch");
         assert!(prompt.contains("Deutsch"));
         assert!(prompt.contains("Executive Summary"));
-        assert!(prompt.contains("Topics"));
+        assert!(prompt.contains("Meetings & Topics"));
         assert!(prompt.contains("Action Items"));
         assert!(prompt.contains("Decisions"));
+        assert!(prompt.contains("unrelated"));
     }
 
     #[test]

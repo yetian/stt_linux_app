@@ -201,6 +201,7 @@ git push origin HEAD
 
 | Version | Changes |
 | --- | --- |
+| 0.1.28 | Summary prompt handles recordings containing several unrelated meetings: each meeting/topic gets its own section, never merged. |
 | 0.1.27 | Test coverage: serde field-name contract, error rendering, legacy DB migration, WAV decode, and file-mtime tests; the reader now tolerates a NULL legacy `status` (72 tests). |
 | 0.1.26 | Summary prompt reworked for multi-topic recordings: per-topic sections, a consolidated action-item checklist (owner/due/topic), and decisions. |
 | 0.1.25 | Sidebar Projects / On Device / Recordings are now collapsible accordions; recorded items are more compact (metadata consolidated, path in tooltip). |
