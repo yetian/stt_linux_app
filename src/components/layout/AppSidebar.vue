@@ -58,7 +58,7 @@ const navItems: { view: AppView; labelKey: string; icon: string }[] = [
 
     <SearchBar v-model="query" />
 
-    <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
+    <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
       <ProjectTree />
       <DeviceFiles />
       <RecordingList />

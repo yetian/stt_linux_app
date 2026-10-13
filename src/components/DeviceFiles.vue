@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
+import SidebarSection from "@/components/SidebarSection.vue";
 import { useDeviceStore } from "@/stores/device";
 import { useProjectsStore } from "@/stores/projects";
 import type { RecorderFile } from "@/types";
@@ -54,41 +55,32 @@ function metadata(file: RecorderFile): string {
 </script>
 
 <template>
-  <div v-if="device.files.length > 0" class="flex flex-col gap-1">
-    <span class="px-1 pb-1 text-[11px] font-medium tracking-wide text-base-500 uppercase">
-      <i class="fa-solid fa-usb mr-1"></i>{{ t("nav.deviceFiles") }}
-    </span>
-
-    <div class="max-h-52 overflow-y-auto pr-1">
-      <div
-        v-for="file in device.files"
-        :key="file.path"
-        class="flex items-center gap-2 rounded-lg px-2.5 py-1.5"
-      >
-        <div class="min-w-0 flex-1">
-          <p class="truncate text-xs text-slate-300">
-            <i class="fa-solid fa-music mr-1 text-base-500"></i>{{ file.name }}
-          </p>
-          <p class="truncate text-[10px] text-base-500">{{ metadata(file) }}</p>
-          <p class="truncate font-mono text-[10px] text-base-600" :title="file.path">
-            {{ file.path }}
-          </p>
-        </div>
-        <button
-          type="button"
-          class="shrink-0 rounded-md p-1 transition-colors"
-          :class="
-            added(file.path)
-              ? 'cursor-default text-emerald-400'
-              : 'text-accent-400 hover:bg-base-800 hover:text-accent-300'
-          "
-          :title="added(file.path) ? t('recordings.added') : t('recordings.add')"
-          :disabled="added(file.path)"
-          @click.stop="add(file)"
-        >
-          <i :class="added(file.path) ? 'fa-solid fa-circle-check' : 'fa-solid fa-plus'"></i>
-        </button>
+  <SidebarSection v-if="device.files.length > 0" :title="t('nav.deviceFiles')" icon="fa-usb">
+    <div
+      v-for="file in device.files"
+      :key="file.path"
+      class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5"
+    >
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-xs text-slate-300" :title="file.path">
+          <i class="fa-solid fa-music mr-1 text-base-500"></i>{{ file.name }}
+        </p>
+        <p class="truncate text-[10px] text-base-500">{{ metadata(file) }}</p>
       </div>
+      <button
+        type="button"
+        class="shrink-0 rounded-md p-1 transition-colors"
+        :class="
+          added(file.path)
+            ? 'cursor-default text-emerald-400'
+            : 'text-accent-400 hover:bg-base-800 hover:text-accent-300'
+        "
+        :title="added(file.path) ? t('recordings.added') : t('recordings.add')"
+        :disabled="added(file.path)"
+        @click.stop="add(file)"
+      >
+        <i :class="added(file.path) ? 'fa-solid fa-circle-check' : 'fa-solid fa-plus'"></i>
+      </button>
     </div>
-  </div>
+  </SidebarSection>
 </template>

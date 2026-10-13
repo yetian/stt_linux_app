@@ -2,6 +2,7 @@
 import { nextTick, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
+import SidebarSection from "@/components/SidebarSection.vue";
 import TextInputDialog from "@/components/TextInputDialog.vue";
 import { useProjectsStore } from "@/stores/projects";
 import type { Project } from "@/types";
@@ -49,11 +50,8 @@ async function confirmDelete(): Promise<void> {
 </script>
 
 <template>
-  <div class="flex flex-col gap-1">
-    <div class="flex items-center justify-between px-1 pb-1">
-      <span class="text-[11px] font-medium tracking-wide text-base-500 uppercase">
-        <i class="fa-solid fa-folder-open mr-1"></i>{{ t("nav.projects") }}
-      </span>
+  <SidebarSection :title="t('nav.projects')" icon="fa-folder-open">
+    <template #action>
       <button
         type="button"
         class="rounded-md px-1.5 text-base-500 transition-colors hover:bg-base-800 hover:text-slate-200"
@@ -62,7 +60,7 @@ async function confirmDelete(): Promise<void> {
       >
         <i class="fa-solid fa-plus"></i>
       </button>
-    </div>
+    </template>
 
     <div v-if="creating" class="px-1 pb-1">
       <input
@@ -70,7 +68,7 @@ async function confirmDelete(): Promise<void> {
         v-model="draftName"
         type="text"
         :placeholder="t('projects.new')"
-        class="w-full rounded-lg border border-accent-500/50 bg-base-850 px-2.5 py-1.5 text-sm text-slate-100 outline-none placeholder:text-base-500"
+        class="w-full rounded-lg border border-accent-500/50 bg-base-850 px-2.5 py-1.5 text-xs text-slate-100 outline-none placeholder:text-base-500"
         @keydown.enter.prevent="confirmCreate"
         @keydown.esc.prevent="cancelCreate"
         @blur="confirmCreate"
@@ -79,7 +77,7 @@ async function confirmDelete(): Promise<void> {
 
     <button
       type="button"
-      class="flex items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors"
+      class="flex items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors"
       :class="
         projects.activeProjectId === null
           ? 'bg-base-800 text-slate-100'
@@ -87,20 +85,18 @@ async function confirmDelete(): Promise<void> {
       "
       @click="projects.selectProject(null)"
     >
-      <span class="truncate"><i class="fa-solid fa-layer-group mr-1"></i>{{ t("nav.allRecordings") }}</span>
-      <span class="ml-2 font-mono text-[11px] text-base-500">
-        {{ projects.totalRecordings }}
-      </span>
+      <span class="truncate"><i class="fa-solid fa-layer-group mr-1.5 text-base-500"></i>{{ t("nav.allRecordings") }}</span>
+      <span class="ml-2 font-mono text-[10px] text-base-500">{{ projects.totalRecordings }}</span>
     </button>
 
-    <p v-if="projects.projects.length === 0" class="px-3 py-2 text-xs text-base-500">
+    <p v-if="projects.projects.length === 0" class="px-3 py-1.5 text-xs text-base-500">
       {{ t("projects.empty") }}
     </p>
 
     <div
       v-for="project in projects.projects"
       :key="project.id"
-      class="group flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors"
+      class="group flex cursor-pointer items-center justify-between rounded-lg px-2.5 py-1.5 text-xs transition-colors"
       :class="
         projects.activeProjectId === project.id
           ? 'bg-base-800 text-slate-100'
@@ -108,7 +104,7 @@ async function confirmDelete(): Promise<void> {
       "
       @click="projects.selectProject(project.id)"
     >
-      <span class="truncate"><i class="fa-solid fa-folder mr-1"></i>{{ project.name }}</span>
+      <span class="truncate"><i class="fa-solid fa-folder mr-1.5 text-base-500"></i>{{ project.name }}</span>
       <span class="flex shrink-0 items-center gap-1">
         <button
           type="button"
@@ -126,34 +122,32 @@ async function confirmDelete(): Promise<void> {
         >
           <i class="fa-solid fa-trash"></i>
         </button>
-        <span class="ml-1 font-mono text-[11px] text-base-500">
-          {{ project.recording_count }}
-        </span>
+        <span class="ml-1 font-mono text-[10px] text-base-500">{{ project.recording_count }}</span>
       </span>
     </div>
+  </SidebarSection>
 
-    <TextInputDialog
-      :open="renameTarget !== null"
-      :title="t('projects.renameTitle')"
-      :label="t('projects.renameLabel')"
-      :initial-value="renameTarget?.name"
-      @confirm="submitRename"
-      @cancel="renameTarget = null"
-    />
+  <TextInputDialog
+    :open="renameTarget !== null"
+    :title="t('projects.renameTitle')"
+    :label="t('projects.renameLabel')"
+    :initial-value="renameTarget?.name"
+    @confirm="submitRename"
+    @cancel="renameTarget = null"
+  />
 
-    <ConfirmDialog
-      :open="deleteTarget !== null"
-      :title="t('projects.deleteTitle')"
-      :message="
-        t('projects.deleteMessage', {
-          name: deleteTarget?.name,
-          count: deleteTarget?.recording_count ?? 0,
-        })
-      "
-      :confirm-label="t('common.delete')"
-      danger
-      @confirm="confirmDelete"
-      @cancel="deleteTarget = null"
-    />
-  </div>
+  <ConfirmDialog
+    :open="deleteTarget !== null"
+    :title="t('projects.deleteTitle')"
+    :message="
+      t('projects.deleteMessage', {
+        name: deleteTarget?.name,
+        count: deleteTarget?.recording_count ?? 0,
+      })
+    "
+    :confirm-label="t('common.delete')"
+    danger
+    @confirm="confirmDelete"
+    @cancel="deleteTarget = null"
+  />
 </template>

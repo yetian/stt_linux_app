@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
+import SidebarSection from "@/components/SidebarSection.vue";
 import { useProjectsStore } from "@/stores/projects";
 import { useUiStore } from "@/stores/ui";
 import type { Recording } from "@/types";
@@ -54,49 +55,39 @@ function recordedLine(recording: Recording): string {
 </script>
 
 <template>
-  <div class="flex flex-col gap-1">
-    <span class="px-1 pb-1 text-[11px] font-medium tracking-wide text-base-500 uppercase">
-      <i class="fa-solid fa-headphones mr-1"></i>{{ t("nav.recordings") }}
-    </span>
-
-    <p v-if="projects.recordings.length === 0" class="px-3 py-2 text-xs text-base-500">
+  <SidebarSection :title="t('nav.recordings')" icon="fa-headphones">
+    <p v-if="projects.recordings.length === 0" class="px-3 py-1.5 text-xs text-base-500">
       {{ t("recordings.empty") }}
     </p>
 
-    <div class="max-h-96 overflow-y-auto pr-1">
-      <button
-        v-for="recording in projects.recordings"
-        :key="recording.id"
-        type="button"
-        class="flex w-full items-start gap-2 rounded-lg px-3 py-2 text-left transition-colors"
-        :class="
-          projects.activeRecordingId === recording.id ? 'bg-base-800' : 'hover:bg-base-850'
-        "
-        @click="select(recording.id)"
-      >
+    <button
+      v-for="recording in projects.recordings"
+      :key="recording.id"
+      type="button"
+      class="flex flex-col rounded-lg px-2.5 py-1.5 text-left transition-colors"
+      :class="projects.activeRecordingId === recording.id ? 'bg-base-800' : 'hover:bg-base-850'"
+      :title="recording.source_path"
+      @click="select(recording.id)"
+    >
+      <span class="flex min-w-0 items-center gap-1.5">
         <span
-          class="mt-1.5 size-2 shrink-0 rounded-full"
+          class="size-1.5 shrink-0 rounded-full"
           :class="STATUS_COLOR[recording.status] ?? 'bg-base-500'"
         />
-        <span class="min-w-0 flex-1">
-          <span class="block truncate text-xs text-slate-300">{{ recording.file_name }}</span>
-          <span v-if="recordedLine(recording)" class="block truncate text-[10px] text-base-500">
-            <i class="fa-regular fa-calendar mr-1"></i>{{ recordedLine(recording) }}
-          </span>
-          <span class="mt-0.5 flex flex-wrap items-center gap-x-2 text-[10px] text-base-500">
-            <span>{{ t(`status.${recording.status}`) }}</span>
-            <span v-if="recording.transcribed_at">
-              <i class="fa-solid fa-file-pen mr-1"></i>{{ formatStamp(recording.transcribed_at) }}
-            </span>
-            <span v-if="recording.summarized_at">
-              <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>{{ formatStamp(recording.summarized_at) }}
-            </span>
-          </span>
-          <span class="block truncate font-mono text-[10px] text-base-600" :title="recording.source_path">
-            {{ recording.source_path }}
-          </span>
+        <span class="truncate text-xs text-slate-300">{{ recording.file_name }}</span>
+      </span>
+      <span class="mt-0.5 flex flex-wrap items-center gap-x-2 pl-3 text-[10px] text-base-500">
+        <span>{{ t(`status.${recording.status}`) }}</span>
+        <span v-if="recordedLine(recording)">
+          <i class="fa-regular fa-calendar mr-1"></i>{{ recordedLine(recording) }}
         </span>
-      </button>
-    </div>
-  </div>
+        <span v-if="recording.transcribed_at">
+          <i class="fa-solid fa-file-pen mr-1"></i>{{ formatStamp(recording.transcribed_at) }}
+        </span>
+        <span v-if="recording.summarized_at">
+          <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>{{ formatStamp(recording.summarized_at) }}
+        </span>
+      </span>
+    </button>
+  </SidebarSection>
 </template>

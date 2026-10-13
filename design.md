@@ -231,9 +231,11 @@ Applications will **not** bundle large model files inside installation packages.
 
 ### Main Layout
 1. **Sidebar / Left Navigation**:
-- **Language Selector Component**: Global dropdown (English / 简体中文 / Deutsch).
+- **Accordion Sections**: Projects, On Device, and Recordings are collapsible; the sidebar scrolls
+  as a whole so sections never overrun the available height.
 - **Project Tree View**: List workspaces (e.g., "Board Meetings", "Interview Series", "General Notes") with file counters.
 - **Search & Filter Bar**: Keyword filter across raw transcripts, AI summaries, and custom tags.
+- (The interface language selector lives in Settings, not the sidebar.)
 - **Footer**: App version (`vX.Y.Z`) from Tauri's `getVersion()`, shown below the navigation items.
 
 2. **Top Header**:
