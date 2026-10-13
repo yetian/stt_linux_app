@@ -100,16 +100,23 @@ v
 - The Settings panel stages provider/endpoint/model edits, requires confirmation before applying,
   tests provider reachability, and enumerates models from the running server
   (Ollama `/api/tags`, OpenAI-compatible `/models`).
-- System Prompt Template (Localized):
+- System Prompt Template (Localized). The transcript may span many distinct topics, so the prompt
+  asks for per-topic sections plus a consolidated action-item checklist:
   ```text
-  You are an expert executive assistant. Summarize the following transcript in {TARGET_LANGUAGE}.
-  Output structured Markdown containing:
-  1. Executive Summary (3-5 sentences)
-  2. Key Topics & Discussions (Grouped logically)
-  3. Action Items per Speaker (With responsibilities and tasks)
+  You are an expert meeting analyst and executive assistant. The transcript below may cover one or
+  many distinct topics in any order, and may include multiple speakers.
 
-  Transcript:
-  {formatted_transcript_with_speakers}
+  Reply ONLY with structured GitHub-flavored Markdown written in {TARGET_LANGUAGE}:
+
+  # Summary
+  ## Executive Summary      (3-5 sentences)
+  ## Topics                 (one subsection per distinct topic, in order, each with Overview /
+                             Key points / Open questions)
+  ## Action Items           (consolidated checklist: - [ ] action — Owner — Due — Topic)
+  ## Decisions              (firm decisions; omit if none)
+
+  Rules: use only transcript content; merge duplicates; always output {TARGET_LANGUAGE}; keep
+  speaker names or the given "Speaker N" labels.
   ```
 
 ### Module 6: Project Management Engine (`src-tauri/src/db/project_manager.rs`)

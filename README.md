@@ -201,6 +201,7 @@ git push origin HEAD
 
 | Version | Changes |
 | --- | --- |
+| 0.1.26 | Summary prompt reworked for multi-topic recordings: per-topic sections, a consolidated action-item checklist (owner/due/topic), and decisions. |
 | 0.1.25 | Sidebar Projects / On Device / Recordings are now collapsible accordions; recorded items are more compact (metadata consolidated, path in tooltip). |
 | 0.1.24 | Recording metadata (recorded date, duration, transcribed/summarized timestamps, path) in the sidebar; "Download .md" for the summary (`<name>_summary_<timestamp>.md`); On Device marks files already added. |
 | 0.1.23 | Fix transcription aborting on non-UTF-8 Whisper segments: read raw segment bytes and decode lossily. |
