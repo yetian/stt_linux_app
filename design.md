@@ -81,7 +81,9 @@ v
 - If a recording has no persisted segment JSON, diarization reconstructs segments from the stored
   `transcript_raw` (`[HH:MM:SS] …` lines) so existing transcripts still align to speaker text.
 - Model path: `~/.config/local-recorder/models/ggml-large-v3-turbo-q5_0.bin`.
-- Supports forced or automatic language detection (`auto`, `zh`, `en`, `de`).
+- Supports forced or automatic language detection (`auto`, `zh`, `en`, `de`). Automatic mode runs with
+  `no_context = true` so each ~30 s decoding window detects language independently, preventing a
+  dominant language (e.g. English) from locking in across windows and hiding later Chinese/German speech.
 - Outputs time-stamped text segments: `[{ start_ms, end_ms, text, detected_language }]`.
 
 ### Module 4: Speaker Diarization Pipeline (`src-tauri/src/diarization/onnx.rs`)

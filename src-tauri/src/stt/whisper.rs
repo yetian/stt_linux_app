@@ -67,6 +67,7 @@ impl WhisperEngine {
         let mut params = FullParams::new(SamplingStrategy::Greedy { best_of: 1 });
         params.set_translate(translate);
         params.set_language(language);
+        params.set_no_context(true);
         params.set_print_special(false);
         params.set_print_progress(false);
         params.set_print_realtime(false);
