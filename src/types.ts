@@ -11,6 +11,15 @@ export interface TranscriptSegment {
   text: string;
 }
 
+export interface Group {
+  id: string;
+  name: string;
+  summary_markdown: string | null;
+  summarized_at: string | null;
+  created_at: string;
+  recording_count: number;
+}
+
 export interface DiarizedSegment {
   start_ms: number;
   end_ms: number;
@@ -56,6 +65,7 @@ export interface Project {
 export interface Recording {
   id: string;
   project_id: string | null;
+  group_id: string | null;
   file_name: string;
   source_path: string;
   audio_duration_secs: number | null;

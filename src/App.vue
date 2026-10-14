@@ -3,6 +3,7 @@ import { onMounted } from "vue";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import AppSidebar from "@/components/layout/AppSidebar.vue";
 import AppHeader from "@/components/layout/AppHeader.vue";
+import GroupsView from "@/views/GroupsView.vue";
 import ModelsView from "@/views/ModelsView.vue";
 import SettingsView from "@/views/SettingsView.vue";
 import WorkspaceView from "@/views/WorkspaceView.vue";
@@ -46,6 +47,7 @@ onMounted(async () => {
       <AppHeader />
       <main class="min-h-0 flex-1 overflow-hidden">
         <WorkspaceView v-if="ui.activeView === 'workspace'" />
+        <GroupsView v-else-if="ui.activeView === 'groups'" />
         <ModelsView v-else-if="ui.activeView === 'models'" />
         <SettingsView v-else />
       </main>

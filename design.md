@@ -133,9 +133,18 @@ CREATE TABLE IF NOT EXISTS projects (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS recording_groups (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    summary_markdown TEXT,
+    summarized_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS recordings (
     id TEXT PRIMARY KEY,
     project_id TEXT,
+    group_id TEXT,
     file_name TEXT NOT NULL,
     source_path TEXT NOT NULL,
     audio_duration_secs REAL,
@@ -172,6 +181,24 @@ CREATE TABLE IF NOT EXISTS user_settings (
 - `delete_recording(recording_id)`
 - `load_settings()` / `save_settings(settings)` — key/value user settings (summary provider,
   endpoints, models, languages, GPU toggle). `save_settings` upserts, so partial writes merge.
+- `create_group(name)` / `list_groups()` / `rename_group(id, name)` / `delete_group(id)` —
+  day/group buckets. Deleting a group detaches its recordings (`group_id = NULL`) instead of
+  deleting them.
+- `assign_recording_to_group(recording_id, group_id)` / `list_group_recordings(group_id)`
+
+### Groups / Daily Roll-up (`src/views/GroupsView.vue`)
+- A **Group** bundles recordings (typically one day) so they can be summarized together; a recording
+  belongs to at most one group, and grouping is independent of Projects (folders).
+- **Auto-group by day**: creates one group per calendar day (from `recorded_at`, else `created_at`)
+  and assigns every ungrouped recording to it. New groups default to today's date as their name.
+- **Process all** runs the normal pipeline over every member sequentially — transcribe if missing,
+  then summarize if missing — and finally generates the group summary.
+- **Day summarization** (`summarize_group`) feeds the LLM each member's summary (falling back to its
+  transcript) concatenated with per-recording headers, using a dedicated roll-up prompt
+  (`build_group_system_prompt`): Overview, per-recording Meetings, a consolidated action-item
+  checklist, and Decisions — all in the configured target language.
+- The Groups view is a peer of the Workspace view (sidebar nav); clicking a member recording opens it
+  in the Workspace, so the two views stay linked.
 
 ---
 

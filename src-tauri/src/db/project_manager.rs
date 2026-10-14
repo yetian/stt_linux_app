@@ -4,7 +4,7 @@ use rusqlite::{params, Connection};
 use uuid::Uuid;
 
 use crate::error::{AppError, AppResult};
-use crate::models::{NewRecording, Project, Recording, Tag};
+use crate::models::{Group, NewRecording, Project, Recording, Tag};
 
 const SCHEMA: &str = r#"
 PRAGMA foreign_keys = ON;
@@ -16,9 +16,18 @@ CREATE TABLE IF NOT EXISTS projects (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS recording_groups (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    summary_markdown TEXT,
+    summarized_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS recordings (
     id TEXT PRIMARY KEY,
     project_id TEXT,
+    group_id TEXT,
     file_name TEXT NOT NULL,
     source_path TEXT NOT NULL,
     audio_duration_secs REAL,
@@ -57,7 +66,10 @@ const PROJECT_COLUMNS: &str = "p.id, p.name, p.description, p.created_at, \
 const RECORDING_COLUMNS: &str = "r.id, r.project_id, r.file_name, r.source_path, \
      r.audio_duration_secs, r.detected_language, r.status, r.transcript_raw, \
      r.summary_markdown, r.created_at, r.transcript_segments, \
-     r.recorded_at, r.transcribed_at, r.summarized_at";
+     r.recorded_at, r.transcribed_at, r.summarized_at, r.group_id";
+
+const GROUP_COLUMNS: &str = "g.id, g.name, g.summary_markdown, g.summarized_at, g.created_at, \
+     (SELECT COUNT(*) FROM recordings r WHERE r.group_id = g.id)";
 
 pub fn init_schema(conn: &Connection) -> AppResult<()> {
     conn.execute_batch(SCHEMA)?;
@@ -77,6 +89,7 @@ fn migrate(conn: &Connection) -> AppResult<()> {
         ("recorded_at", "INTEGER"),
         ("transcribed_at", "DATETIME"),
         ("summarized_at", "DATETIME"),
+        ("group_id", "TEXT"),
     ] {
         if !columns.iter().any(|existing| existing == column) {
             conn.execute_batch(&format!(
@@ -84,6 +97,10 @@ fn migrate(conn: &Connection) -> AppResult<()> {
             ))?;
         }
     }
+
+    conn.execute_batch(
+        "CREATE INDEX IF NOT EXISTS idx_recordings_group ON recordings(group_id);",
+    )?;
 
     Ok(())
 }
@@ -95,6 +112,17 @@ fn project_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<Project> {
         description: row.get(2)?,
         created_at: row.get(3)?,
         recording_count: row.get(4)?,
+    })
+}
+
+fn group_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<Group> {
+    Ok(Group {
+        id: row.get(0)?,
+        name: row.get(1)?,
+        summary_markdown: row.get(2)?,
+        summarized_at: row.get(3)?,
+        created_at: row.get(4)?,
+        recording_count: row.get(5)?,
     })
 }
 
@@ -116,6 +144,7 @@ fn recording_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<Recording> {
         recorded_at: row.get(11)?,
         transcribed_at: row.get(12)?,
         summarized_at: row.get(13)?,
+        group_id: row.get(14)?,
     })
 }
 
@@ -397,6 +426,102 @@ pub fn rename_recording(conn: &Connection, id: &str, file_name: &str) -> AppResu
 
 pub fn delete_tag(conn: &Connection, tag_id: i64) -> AppResult<()> {
     conn.execute("DELETE FROM tags WHERE id = ?1", params![tag_id])?;
+    Ok(())
+}
+
+pub fn create_group(conn: &Connection, name: &str) -> AppResult<Group> {
+    let trimmed = name.trim();
+    if trimmed.is_empty() {
+        return Err(AppError::msg("group name must not be empty"));
+    }
+
+    let id = Uuid::new_v4().to_string();
+    conn.execute(
+        "INSERT INTO recording_groups (id, name) VALUES (?1, ?2)",
+        params![id, trimmed],
+    )?;
+
+    get_group(conn, &id)
+}
+
+pub fn get_group(conn: &Connection, id: &str) -> AppResult<Group> {
+    let sql = format!("SELECT {GROUP_COLUMNS} FROM recording_groups g WHERE g.id = ?1");
+    conn.query_row(&sql, params![id], group_from_row)
+        .map_err(Into::into)
+}
+
+pub fn list_groups(conn: &Connection) -> AppResult<Vec<Group>> {
+    let sql = format!(
+        "SELECT {GROUP_COLUMNS} FROM recording_groups g ORDER BY g.name DESC, g.created_at DESC"
+    );
+    let mut statement = conn.prepare(&sql)?;
+    let rows = statement.query_map([], group_from_row)?;
+
+    let mut groups = Vec::new();
+    for row in rows {
+        groups.push(row?);
+    }
+    Ok(groups)
+}
+
+pub fn rename_group(conn: &Connection, id: &str, name: &str) -> AppResult<Group> {
+    let trimmed = name.trim();
+    if trimmed.is_empty() {
+        return Err(AppError::msg("group name must not be empty"));
+    }
+
+    conn.execute(
+        "UPDATE recording_groups SET name = ?1 WHERE id = ?2",
+        params![trimmed, id],
+    )?;
+
+    get_group(conn, id)
+}
+
+pub fn delete_group(conn: &Connection, id: &str) -> AppResult<()> {
+    conn.execute(
+        "UPDATE recordings SET group_id = NULL WHERE group_id = ?1",
+        params![id],
+    )?;
+    conn.execute("DELETE FROM recording_groups WHERE id = ?1", params![id])?;
+    Ok(())
+}
+
+pub fn assign_recording_to_group(
+    conn: &Connection,
+    recording_id: &str,
+    group_id: Option<&str>,
+) -> AppResult<()> {
+    conn.execute(
+        "UPDATE recordings SET group_id = ?1 WHERE id = ?2",
+        params![group_id, recording_id],
+    )?;
+    Ok(())
+}
+
+pub fn list_group_recordings(conn: &Connection, group_id: &str) -> AppResult<Vec<Recording>> {
+    let sql = format!(
+        "SELECT {RECORDING_COLUMNS} FROM recordings r WHERE r.group_id = ?1 \
+         ORDER BY r.recorded_at ASC, r.created_at ASC"
+    );
+    let mut statement = conn.prepare(&sql)?;
+    let rows = statement.query_map(params![group_id], recording_from_row)?;
+    collect(rows)
+}
+
+pub fn save_group_summary(conn: &Connection, group_id: &str, summary: &str) -> AppResult<()> {
+    conn.execute(
+        "UPDATE recording_groups SET summary_markdown = ?1 WHERE id = ?2",
+        params![summary, group_id],
+    )?;
+    Ok(())
+}
+
+pub fn mark_group_summarized(conn: &Connection, group_id: &str) -> AppResult<()> {
+    conn.execute(
+        "UPDATE recording_groups SET summarized_at = CURRENT_TIMESTAMP WHERE id = ?1",
+        params![group_id],
+    )?;
     Ok(())
 }
 
@@ -686,6 +811,62 @@ mod tests {
         assert!(recording.recorded_at.is_none());
         assert!(recording.transcribed_at.is_none());
         assert!(recording.summarized_at.is_none());
+        assert!(recording.group_id.is_none());
+    }
+
+    #[test]
+    fn creates_lists_and_renames_groups() {
+        let conn = setup();
+        let group = create_group(&conn, "  2026-10-14  ").unwrap();
+        assert_eq!(group.name, "2026-10-14");
+        assert_eq!(group.recording_count, 0);
+
+        create_group(&conn, "2026-10-13").unwrap();
+        let groups = list_groups(&conn).unwrap();
+        assert_eq!(groups.len(), 2);
+        assert_eq!(groups[0].name, "2026-10-14");
+
+        assert_eq!(rename_group(&conn, &group.id, "Day one").unwrap().name, "Day one");
+        assert!(create_group(&conn, "   ").is_err());
+        assert!(rename_group(&conn, &group.id, "  ").is_err());
+    }
+
+    #[test]
+    fn assigns_recordings_to_group_and_counts_them() {
+        let conn = setup();
+        let group = create_group(&conn, "2026-10-14").unwrap();
+        let first = add_recording(&conn, &new_recording("a.mp3", None)).unwrap();
+        let second = add_recording(&conn, &new_recording("b.mp3", None)).unwrap();
+
+        assign_recording_to_group(&conn, &first.id, Some(&group.id)).unwrap();
+        assign_recording_to_group(&conn, &second.id, Some(&group.id)).unwrap();
+
+        assert_eq!(get_recording(&conn, &first.id).unwrap().group_id, Some(group.id.clone()));
+        let members = list_group_recordings(&conn, &group.id).unwrap();
+        assert_eq!(members.len(), 2);
+        assert_eq!(get_group(&conn, &group.id).unwrap().recording_count, 2);
+
+        assign_recording_to_group(&conn, &first.id, None).unwrap();
+        assert_eq!(list_group_recordings(&conn, &group.id).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn saving_group_summary_marks_it_and_delete_detaches_members() {
+        let conn = setup();
+        let group = create_group(&conn, "2026-10-14").unwrap();
+        let recording = add_recording(&conn, &new_recording("a.mp3", None)).unwrap();
+        assign_recording_to_group(&conn, &recording.id, Some(&group.id)).unwrap();
+
+        save_group_summary(&conn, &group.id, "# Day").unwrap();
+        mark_group_summarized(&conn, &group.id).unwrap();
+
+        let fetched = get_group(&conn, &group.id).unwrap();
+        assert_eq!(fetched.summary_markdown.as_deref(), Some("# Day"));
+        assert!(fetched.summarized_at.is_some());
+
+        delete_group(&conn, &group.id).unwrap();
+        assert!(list_groups(&conn).unwrap().is_empty());
+        assert!(get_recording(&conn, &recording.id).unwrap().group_id.is_none());
     }
 
     #[test]

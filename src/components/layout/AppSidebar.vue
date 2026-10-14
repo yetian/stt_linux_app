@@ -39,6 +39,7 @@ onBeforeUnmount(() => {
 
 const navItems: { view: AppView; labelKey: string; icon: string }[] = [
   { view: "workspace", labelKey: "nav.workspace", icon: "fa-desktop" },
+  { view: "groups", labelKey: "nav.groups", icon: "fa-layer-group" },
   { view: "models", labelKey: "nav.models", icon: "fa-brain" },
   { view: "settings", labelKey: "nav.settings", icon: "fa-gear" },
 ];

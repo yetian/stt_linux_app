@@ -61,10 +61,51 @@ Rules:
     )
 }
 
+pub fn build_group_system_prompt(target_language: &str) -> String {
+    format!(
+        r##"You are an expert meeting analyst and executive assistant. You are given the individual summaries (or, when a summary is missing, the transcript) of several recordings that all belong to the same group — typically a single day. The recordings may cover completely unrelated meetings and topics.
+
+Produce ONE consolidated roll-up of the whole group in structured GitHub-flavored Markdown written in {target_language}. Use exactly this structure:
+
+# Group Summary
+
+## Overview
+A 3-6 sentence synthesis of the group as a whole: the main themes, and how many meetings/topics it covers.
+
+## Meetings
+One subsection per source recording, in the order given, each briefly recapping it.
+### <short descriptive title>
+- 1-3 sentences with the most important points of that recording.
+
+## Consolidated Action Items
+Every action point across all recordings, de-duplicated, as Markdown task items with the owner and any due date/timeframe when stated (otherwise "Unassigned" / "None").
+- [ ] <action> — Owner: <name or Unassigned> — Due: <date/timeframe or None> — From: <recording title>
+
+## Decisions
+Bullet list of firm decisions across the group (omit this section if there were none).
+
+Rules:
+- Rely only on the provided summaries/transcripts; never invent facts.
+- Merge repeated items that span several meetings into a single entry.
+- Always write the output in {target_language}, even if the sources are in another language.
+- Keep it concise and skimmable."##
+    )
+}
+
 pub async fn summarize(transcript: &str, options: &SummarizeOptions) -> AppResult<String> {
+    let system = build_system_prompt(&options.target_language);
+    generate(&system, transcript, options).await
+}
+
+pub async fn summarize_group(document: &str, options: &SummarizeOptions) -> AppResult<String> {
+    let system = build_group_system_prompt(&options.target_language);
+    generate(&system, document, options).await
+}
+
+async fn generate(system: &str, user: &str, options: &SummarizeOptions) -> AppResult<String> {
     match options.provider {
-        SummaryProvider::Ollama => summarize_with_ollama(transcript, options).await,
-        SummaryProvider::Openai => summarize_with_openai(transcript, options).await,
+        SummaryProvider::Ollama => ollama_generate(system, user, options).await,
+        SummaryProvider::Openai => openai_chat(system, user, options).await,
     }
 }
 
@@ -92,17 +133,17 @@ struct OllamaResponse {
     response: String,
 }
 
-async fn summarize_with_ollama(
-    transcript: &str,
+async fn ollama_generate(
+    system: &str,
+    user: &str,
     options: &SummarizeOptions,
 ) -> AppResult<String> {
     let url = format!("{}/api/generate", normalize(&options.endpoint));
-    let system = build_system_prompt(&options.target_language);
 
     let payload = OllamaRequest {
         model: &options.model,
-        prompt: transcript,
-        system: &system,
+        prompt: user,
+        system,
         stream: false,
     };
 
@@ -151,23 +192,23 @@ struct OpenAiMessageResponse {
     content: Option<String>,
 }
 
-async fn summarize_with_openai(
-    transcript: &str,
+async fn openai_chat(
+    system: &str,
+    user: &str,
     options: &SummarizeOptions,
 ) -> AppResult<String> {
     let url = format!("{}/chat/completions", normalize(&options.endpoint));
-    let system = build_system_prompt(&options.target_language);
 
     let payload = OpenAiRequest {
         model: &options.model,
         messages: vec![
             OpenAiMessage {
                 role: "system",
-                content: &system,
+                content: system,
             },
             OpenAiMessage {
                 role: "user",
-                content: transcript,
+                content: user,
             },
         ],
         stream: false,
@@ -283,6 +324,15 @@ mod tests {
         assert!(prompt.contains("Action Items"));
         assert!(prompt.contains("Decisions"));
         assert!(prompt.contains("unrelated"));
+    }
+
+    #[test]
+    fn group_prompt_includes_target_language_and_structure() {
+        let prompt = build_group_system_prompt("中文");
+        assert!(prompt.contains("中文"));
+        assert!(prompt.contains("Overview"));
+        assert!(prompt.contains("Consolidated Action Items"));
+        assert!(prompt.contains("Meetings"));
     }
 
     #[test]

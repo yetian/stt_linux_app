@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
-export type AppView = "workspace" | "models" | "settings";
+export type AppView = "workspace" | "groups" | "models" | "settings";
 
 export const useUiStore = defineStore("ui", () => {
   const activeView = ref<AppView>("workspace");

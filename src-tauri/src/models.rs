@@ -10,9 +10,20 @@ pub struct Project {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Group {
+    pub id: String,
+    pub name: String,
+    pub summary_markdown: Option<String>,
+    pub summarized_at: Option<String>,
+    pub created_at: String,
+    pub recording_count: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Recording {
     pub id: String,
     pub project_id: Option<String>,
+    pub group_id: Option<String>,
     pub file_name: String,
     pub source_path: String,
     pub audio_duration_secs: Option<f64>,
@@ -52,6 +63,7 @@ mod tests {
         let recording = Recording {
             id: "id".to_string(),
             project_id: None,
+            group_id: None,
             file_name: "a.mp3".to_string(),
             source_path: "/x/a.mp3".to_string(),
             audio_duration_secs: Some(1.5),
@@ -70,6 +82,7 @@ mod tests {
         for key in [
             "id",
             "project_id",
+            "group_id",
             "file_name",
             "source_path",
             "audio_duration_secs",

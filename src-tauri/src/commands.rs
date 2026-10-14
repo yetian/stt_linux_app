@@ -12,7 +12,7 @@ use crate::db::project_manager as pm;
 use crate::diarization::{self, DiarizationPhase, DiarizedSegment, SpeakerTurn};
 use crate::error::{AppError, AppResult};
 use crate::llm::{self, SummarizeOptions, SummaryProvider};
-use crate::models::{NewRecording, Project, Recording, Tag};
+use crate::models::{Group, NewRecording, Project, Recording, Tag};
 use crate::progress;
 use crate::services::model_downloader::{self, ModelStatus};
 use crate::stt::{self, TranscriptSegment, WhisperEngine};
@@ -232,6 +232,105 @@ pub fn rename_recording(
 ) -> AppResult<Recording> {
     let conn = state.connection();
     pm::rename_recording(&conn, &recording_id, &file_name)
+}
+
+#[tauri::command]
+pub fn create_group(state: State<'_, AppState>, name: String) -> AppResult<Group> {
+    let conn = state.connection();
+    pm::create_group(&conn, &name)
+}
+
+#[tauri::command]
+pub fn list_groups(state: State<'_, AppState>) -> AppResult<Vec<Group>> {
+    let conn = state.connection();
+    pm::list_groups(&conn)
+}
+
+#[tauri::command]
+pub fn rename_group(state: State<'_, AppState>, group_id: String, name: String) -> AppResult<Group> {
+    let conn = state.connection();
+    pm::rename_group(&conn, &group_id, &name)
+}
+
+#[tauri::command]
+pub fn delete_group(state: State<'_, AppState>, group_id: String) -> AppResult<()> {
+    let conn = state.connection();
+    pm::delete_group(&conn, &group_id)
+}
+
+#[tauri::command]
+pub fn assign_recording_to_group(
+    state: State<'_, AppState>,
+    recording_id: String,
+    group_id: Option<String>,
+) -> AppResult<()> {
+    let conn = state.connection();
+    pm::assign_recording_to_group(&conn, &recording_id, group_id.as_deref())
+}
+
+#[tauri::command]
+pub fn list_group_recordings(
+    state: State<'_, AppState>,
+    group_id: String,
+) -> AppResult<Vec<Recording>> {
+    let conn = state.connection();
+    pm::list_group_recordings(&conn, &group_id)
+}
+
+#[tauri::command]
+pub async fn summarize_group(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    group_id: String,
+    provider: SummaryProvider,
+    endpoint: String,
+    model: String,
+    target_language: String,
+) -> AppResult<String> {
+    let recordings = {
+        let conn = state.connection();
+        pm::list_group_recordings(&conn, &group_id)?
+    };
+
+    let mut document = String::new();
+    let mut included = 0usize;
+    for recording in &recordings {
+        let body = recording
+            .summary_markdown
+            .as_deref()
+            .or(recording.transcript_raw.as_deref());
+        if let Some(body) = body {
+            if !body.trim().is_empty() {
+                document.push_str(&format!("# {}\n\n{}\n\n", recording.file_name, body));
+                included += 1;
+            }
+        }
+    }
+
+    if included == 0 {
+        return Err(AppError::msg(
+            "group has no summaries or transcripts to combine",
+        ));
+    }
+
+    let options = SummarizeOptions {
+        provider,
+        endpoint,
+        model,
+        target_language,
+    };
+
+    progress::emit(&app, &group_id, "summarizing", Some("connecting"), None);
+    progress::emit(&app, &group_id, "summarizing", Some("generating"), None);
+    let summary = llm::summarize_group(&document, &options).await?;
+
+    {
+        let conn = state.connection();
+        pm::save_group_summary(&conn, &group_id, &summary)?;
+        pm::mark_group_summarized(&conn, &group_id)?;
+    }
+
+    Ok(summary)
 }
 
 #[tauri::command]

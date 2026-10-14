@@ -16,6 +16,8 @@ Everything runs on your machine. No audio, transcript, or summary ever leaves th
 - **Local summarization** — Ollama (`/api/generate`) or OpenAI-compatible (`/chat/completions`),
   with prompts localized to the selected output language.
 - **Project workspace** — embedded SQLite for projects, recordings, statuses, and tags.
+- **Groups / daily roll-up** — bundle recordings (auto-grouped by day or manually), process them in
+  one click, and generate a combined day summary across every member.
 - **Full lifecycle** — create, rename, move, tag, and delete projects and recordings, with a
   confirmation dialog for destructive actions.
 - **Live progress** — backend `pipeline-progress` events drive per-stage progress with elapsed time
@@ -154,11 +156,14 @@ stt_app/
 | `create_project` / `list_projects` / `rename_project` / `delete_project` | Project management |
 | `add_recording` / `list_recordings` / `rename_recording` / `delete_recording` | Recording management |
 | `assign_recording_to_project` | Move a recording between projects |
+| `create_group` / `list_groups` / `rename_group` / `delete_group` | Day/group management |
+| `assign_recording_to_group` / `list_group_recordings` | Group membership |
 | `add_tag` / `list_tags` / `delete_tag` | Recording tags |
 | `search_recordings` | Keyword / project / tag search |
 | `transcribe_recording` | Decode + Whisper transcription (saves transcript) |
 | `diarize_recording` | Embed, cluster, align speakers (saves speaker transcript) |
 | `summarize_recording` | LLM summary (saves summary + marks completed) |
+| `summarize_group` | Roll up a group's summaries/transcripts into one day summary |
 | `list_models` / `download_model` / `delete_model` | Model manager |
 | `export_recording` | Write Markdown to the outputs directory |
 
@@ -201,6 +206,7 @@ git push origin HEAD
 
 | Version | Changes |
 | --- | --- |
+| 0.1.30 | Groups view: bundle recordings (auto-group by day or manually), process all members in one click, and generate a combined day summary. |
 | 0.1.29 | Auto language detection no longer locks onto the dominant language: decoding runs with `no_context`, so each window detects independently and mixed English/Chinese/German recordings transcribe better. |
 | 0.1.28 | Summary prompt handles recordings containing several unrelated meetings: each meeting/topic gets its own section, never merged. |
 | 0.1.27 | Test coverage: serde field-name contract, error rendering, legacy DB migration, WAV decode, and file-mtime tests; the reader now tolerates a NULL legacy `status` (72 tests). |
