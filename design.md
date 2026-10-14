@@ -195,8 +195,10 @@ CREATE TABLE IF NOT EXISTS user_settings (
   then summarize if missing — and finally generates the group summary.
 - **Day summarization** (`summarize_group`) feeds the LLM each member's summary (falling back to its
   transcript) concatenated with per-recording headers, using a dedicated roll-up prompt
-  (`build_group_system_prompt`): Overview, per-recording Meetings, a consolidated action-item
-  checklist, and Decisions — all in the configured target language.
+  (`build_group_system_prompt`): Overview, a detailed section per recording (Summary / Key points /
+  Details & context / Open questions), a consolidated action-item checklist, and Decisions — all in
+  the configured target language. The prompt is biased toward completeness so numbers, names, and
+  rationale are preserved rather than compressed away.
 - The Groups view is a peer of the Workspace view (sidebar nav); clicking a member recording opens it
   in the Workspace, so the two views stay linked.
 
