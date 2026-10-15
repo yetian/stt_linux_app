@@ -206,6 +206,7 @@ git push origin HEAD
 
 | Version | Changes |
 | --- | --- |
+| 0.1.32 | Repeat/loop protection for transcription: temperature fallback kept enabled and consecutive duplicate segments dropped before saving. |
 | 0.1.31 | Day/group summary prompt reworked to be far more detailed per meeting/topic (Summary, exhaustive Key points, Details & context, Open questions) so numbers, names, and rationale are preserved instead of compressed away. |
 | 0.1.30 | Groups view: bundle recordings (auto-group by day or manually), process all members in one click, and generate a combined day summary. |
 | 0.1.29 | Auto language detection no longer locks onto the dominant language: decoding runs with `no_context`, so each window detects independently and mixed English/Chinese/German recordings transcribe better. |

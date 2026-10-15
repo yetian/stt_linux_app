@@ -84,7 +84,11 @@ v
 - Supports forced or automatic language detection (`auto`, `zh`, `en`, `de`). Automatic mode runs with
   `no_context = true` so each ~30 s decoding window detects language independently, preventing a
   dominant language (e.g. English) from locking in across windows and hiding later Chinese/German speech.
-- Outputs time-stamped text segments: `[{ start_ms, end_ms, text, detected_language }]`.
+- **Repetition handling**: `no_context = true` also removes the feedback loop that makes Whisper parrot
+  a phrase across windows; temperature fallback is kept enabled (`temperature = 0.0`,
+  `temperature_inc = 0.2`) so stubborn windows re-decode; and consecutive segments whose normalized
+  text is identical are dropped (`dedupe_repeats`) before the transcript is saved.
+- Outputs time-stamped text segments: `[{ start_ms, end_ms, text }]`.
 
 ### Module 4: Speaker Diarization Pipeline (`src-tauri/src/diarization/onnx.rs`)
 1. **Voice Activity Detection (VAD)**: Uses energy-based sliding window or silero-vad ONNX to extract active speech intervals.

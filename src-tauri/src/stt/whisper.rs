@@ -68,6 +68,8 @@ impl WhisperEngine {
         params.set_translate(translate);
         params.set_language(language);
         params.set_no_context(true);
+        params.set_temperature(0.0);
+        params.set_temperature_inc(0.2);
         params.set_print_special(false);
         params.set_print_progress(false);
         params.set_print_realtime(false);
@@ -107,8 +109,42 @@ impl WhisperEngine {
             });
         }
 
-        Ok(segments)
+        Ok(dedupe_repeats(segments))
     }
+}
+
+fn normalize_for_dedup(text: &str) -> String {
+    text.to_lowercase()
+        .chars()
+        .map(|character| {
+            if character.is_alphanumeric() {
+                character
+            } else {
+                ' '
+            }
+        })
+        .collect::<String>()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn dedupe_repeats(segments: Vec<TranscriptSegment>) -> Vec<TranscriptSegment> {
+    let mut result: Vec<TranscriptSegment> = Vec::with_capacity(segments.len());
+    let mut last_normalized: Option<String> = None;
+
+    for segment in segments {
+        let normalized = normalize_for_dedup(&segment.text);
+        if !normalized.is_empty() {
+            if last_normalized.as_deref() == Some(normalized.as_str()) {
+                continue;
+            }
+            last_normalized = Some(normalized);
+        }
+        result.push(segment);
+    }
+
+    result
 }
 
 pub fn format_transcript(segments: &[TranscriptSegment]) -> String {
@@ -266,5 +302,49 @@ mod tests {
     #[test]
     fn parses_ignores_malformed_lines() {
         assert!(parse_transcript("no timestamps here\n[bad] nope").is_empty());
+    }
+
+    fn segment(start_ms: i64, end_ms: i64, text: &str) -> TranscriptSegment {
+        TranscriptSegment {
+            start_ms,
+            end_ms,
+            text: text.to_string(),
+        }
+    }
+
+    #[test]
+    fn drops_consecutive_repeated_segments() {
+        let segments = vec![
+            segment(0, 1_000, "Thank you for watching."),
+            segment(1_000, 2_000, "Thank you for watching."),
+            segment(2_000, 3_000, "thank you for watching"),
+            segment(3_000, 4_000, "Goodbye."),
+        ];
+
+        let deduped = dedupe_repeats(segments);
+        assert_eq!(deduped.len(), 2);
+        assert_eq!(deduped[0].text, "Thank you for watching.");
+        assert_eq!(deduped[1].text, "Goodbye.");
+    }
+
+    #[test]
+    fn keeps_distinct_segments_and_blank_ones() {
+        let segments = vec![
+            segment(0, 1_000, "first"),
+            segment(1_000, 1_500, ""),
+            segment(1_500, 2_000, "second"),
+            segment(2_000, 3_000, "first"),
+        ];
+
+        let deduped = dedupe_repeats(segments);
+        assert_eq!(deduped.len(), 4);
+    }
+
+    #[test]
+    fn normalizes_punctuation_and_case_for_dedup() {
+        assert_eq!(
+            normalize_for_dedup("  Hello,  WORLD!  "),
+            normalize_for_dedup("hello world")
+        );
     }
 }
