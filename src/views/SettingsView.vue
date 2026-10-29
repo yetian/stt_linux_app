@@ -307,7 +307,7 @@ function onProvider(event: Event): void {
         <input
           v-model.number="contextSize"
           type="number"
-          min="1024"
+          min="4096"
           step="1024"
           class="w-28 rounded-md border border-base-700 bg-base-850 px-2 py-1 text-right font-mono text-xs text-slate-200 outline-none focus:border-accent-500"
         />

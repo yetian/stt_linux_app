@@ -175,6 +175,6 @@
     "confirmTitle": "Konfigurationsänderungen anwenden?",
     "confirmMessage": "Folgendes wird geändert: {fields}",
     "contextSize": "LLM-Kontextfenster (Tokens)",
-    "contextSizeHint": "Muss der Kontextlänge entsprechen, mit der das Modell in LM Studio geladen ist. Größere Werte bedeuten weniger, größere Zusammenfassungsblöcke."
+    "contextSizeHint": "Muss der Kontextlänge entsprechen, mit der das Modell in LM Studio geladen ist. Empfohlen: 8192 für kurze Aufnahmen, 16384–32768 für lange Tage. Die Zusammenfassung ist auf ca. 1/4 davon begrenzt."
   }
 }

@@ -6,7 +6,7 @@ use crate::error::{AppError, AppResult};
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(600);
 pub const DEFAULT_CONTEXT_TOKENS: u32 = 8_192;
-const CONTEXT_RESERVED_TOKENS: usize = 2_600;
+const SYSTEM_PROMPT_RESERVE_TOKENS: usize = 1_000;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -59,8 +59,9 @@ Rules:
 - The transcript may combine unrelated meetings with no connection; summarize each one separately and do not treat them as a single conversation.
 - Use only information present in the transcript; never invent facts.
 - Merge duplicate or repeated points within the same meeting/topic; keep the result concise and skimmable.
+- Be concise: one short line per bullet, no filler, no repeated points, and no commentary outside the required sections.
 - Always write the output in {target_language}, even if the transcript is in another language.
-- Keep speaker names if given; otherwise use the "Speaker N" labels from the transcript."##
+- Keep speaker names if given; otherwise use the "Speaker N" labels from the transcript. Stop after the last required section."##
     )
 }
 
@@ -68,7 +69,7 @@ pub fn build_group_system_prompt(target_language: &str) -> String {
     format!(
         r##"You are an expert meeting analyst and executive assistant. You are given the individual summaries (or, when a summary is missing, the transcript) of several recordings that all belong to the same group — typically a single day. The recordings may cover completely unrelated meetings and topics.
 
-Produce ONE consolidated, DETAILED roll-up of the whole group in structured GitHub-flavored Markdown written in {target_language}. Your priority is to preserve information: it is far better to be thorough than to be brief, as long as the result stays organized. Do not drop names, numbers, figures, dates, amounts, decisions, or their rationale.
+Produce ONE consolidated roll-up of the whole group in structured GitHub-flavored Markdown written in {target_language}. Keep it information-dense but concise: include every substantive fact (names, numbers, figures, dates, amounts, decisions and their rationale) using short bullets — no filler, no repetition, no preamble, and no closing remarks. Stop as soon as the required sections are complete.
 
 Use exactly this structure:
 
@@ -81,7 +82,7 @@ A 4-6 sentence synthesis of the group as a whole: the main themes, and how many 
 One detailed section per source recording, in the order given. Capture ALL substantive content from each source — never compress a meeting down to a single line.
 ### <short descriptive title>
 - **Summary:** a 2-4 sentence recap of what the recording was about and its outcome.
-- **Key points:** a thorough, itemized bullet list covering every substantive fact: people and their roles, numbers, amounts, dates and deadlines, metrics, concrete examples, arguments made, options weighed, decisions and their rationale, and any conclusions. Use sub-bullets to keep related details grouped. Include as many bullets as the source warrants; err on the side of completeness.
+- **Key points:** itemized bullets covering the substantive facts: people and their roles, numbers, amounts, dates and deadlines, metrics, examples, arguments, options weighed, decisions and their rationale, and conclusions. Keep each bullet to one short line and state each detail once.
 - **Details & context:** background, constraints, dependencies, caveats, and any other supporting information worth preserving (omit if the source has none).
 - **Open questions:** unresolved items, risks, and follow-ups (omit if none).
 
@@ -96,8 +97,9 @@ Rules:
 - Rely only on the provided summaries/transcripts; never invent facts, but do not omit real details either.
 - Preserve specificity: keep exact names, numbers, dates, and figures rather than generalizing them away.
 - Merge only items that clearly repeat across meetings; otherwise keep each section self-contained and complete.
+- Be concise: one short line per bullet, no filler, no repeated points, no commentary outside the required sections.
 - Always write the output in {target_language}, even if the sources are in another language.
-- Stay organized with headings and bullets so the added detail remains skimmable."##
+- Stay organized with headings and bullets so the added detail remains skimmable. Never exceed what is needed to cover the required sections."##
     )
 }
 
@@ -113,10 +115,15 @@ pub async fn summarize_group(document: &str, options: &SummarizeOptions) -> AppR
 
 const MAX_REDUCE_PASSES: usize = 8;
 
+fn output_budget(context_tokens: u32) -> usize {
+    ((context_tokens as usize) / 4).clamp(512, 8_192)
+}
+
 fn content_budget(context_tokens: u32) -> usize {
     (context_tokens as usize)
-        .saturating_sub(CONTEXT_RESERVED_TOKENS)
-        .clamp(1_000, 28_000)
+        .saturating_sub(output_budget(context_tokens))
+        .saturating_sub(SYSTEM_PROMPT_RESERVE_TOKENS)
+        .clamp(1_000, 48_000)
 }
 
 const MAP_PROMPT: &str = "You are extracting facts from ONE part of a longer source so the parts can be merged later. Reply ONLY with terse bullet notes covering every substantive detail: people and roles, numbers, amounts, dates and deadlines, decisions and their rationale, options considered, and open questions. Write the notes in the same language as the source. Do not write prose, section headings, or a summary; do not omit details; never invent anything. Keep each bullet short.";
@@ -250,9 +257,10 @@ async fn compress_to_budget(
         levels += 1;
     }
 
+    let recommended = options.context_tokens.saturating_mul(2).min(131_072);
     Err(AppError::msg(format!(
-        "input is too large for the configured context window ({} tokens); increase the model's context window in LM Studio (or the context-window setting) and try again",
-        options.context_tokens
+        "input is too large for the configured context window ({} tokens); increase the model's context window in LM Studio (or the context-window setting) to at least {} tokens and try again",
+        options.context_tokens, recommended
     )))
 }
 
@@ -313,11 +321,17 @@ async fn request_error(response: reqwest::Response, label: &str) -> AppError {
 }
 
 #[derive(Serialize)]
+struct OllamaOptions {
+    num_predict: usize,
+}
+
+#[derive(Serialize)]
 struct OllamaRequest<'a> {
     model: &'a str,
     prompt: &'a str,
     system: &'a str,
     stream: bool,
+    options: OllamaOptions,
 }
 
 #[derive(Deserialize)]
@@ -337,6 +351,9 @@ async fn ollama_generate(
         prompt: user,
         system,
         stream: false,
+        options: OllamaOptions {
+            num_predict: output_budget(options.context_tokens),
+        },
     };
 
     let response = http_client()?
@@ -364,6 +381,7 @@ struct OpenAiRequest<'a> {
     model: &'a str,
     messages: Vec<OpenAiMessage<'a>>,
     stream: bool,
+    max_tokens: usize,
 }
 
 #[derive(Deserialize)]
@@ -401,6 +419,7 @@ async fn openai_chat(
             },
         ],
         stream: false,
+        max_tokens: output_budget(options.context_tokens),
     };
 
     let response = http_client()?
@@ -564,8 +583,12 @@ mod tests {
     }
 
     #[test]
-    fn derives_content_budget_from_context_window() {
-        assert_eq!(content_budget(8_192), 5_592);
+    fn derives_budgets_from_context_window() {
+        assert_eq!(output_budget(8_192), 2_048);
+        assert_eq!(output_budget(32_768), 8_192);
+        assert_eq!(output_budget(1_000), 512);
+
+        assert_eq!(content_budget(8_192), 5_144);
         assert!(content_budget(32_768) > content_budget(8_192));
         assert_eq!(content_budget(1_000), 1_000);
     }

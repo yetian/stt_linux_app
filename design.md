@@ -105,16 +105,17 @@ v
 - Dynamically adapts system prompt according to the user's selected UI target language.
 - **Chunked (map-reduce) summarization**: long inputs are estimated in tokens (`~1 token / 4 ASCII
   chars`, `1 token / non-ASCII char`) and split into chunks sized from the user's **context window**
-  setting (`content_budget = context - 2600` reserve for system prompt + output, clamped 1000–28000;
-  default 8192). Chunks split at line boundaries (hard-split if a single line is huge). Each chunk is
-  condensed to a short **fact-note list** (map), notes are merged in budget-sized batches (reduce, max
-  8 levels), and only the final small note set is rendered once with the full detailed prompt.
-  Intermediate steps never use the verbose output format, so the number of requests stays close to
-  `ceil(input_tokens / budget) + a few` instead of re-summarizing the whole output on every pass.
+  setting. The window is split into `output = clamp(context/4, 512–8192)` and
+  `content = context - output - 1000`, so content never leaves too little room to answer (default
+  8192 ⇒ 5144 content / 2048 output). Chunks split at line boundaries (hard-split if a single line is
+  huge). Each chunk is condensed to a short **fact-note list** (map), notes are merged in budget-sized
+  batches (reduce, max 8 levels), and only the final small note set is rendered once with the full
+  prompt. Requests stay close to `ceil(input_tokens / content) + a few`.
+- **Output is capped**: every request sets `max_tokens` (OpenAI-compatible) / `num_predict` (Ollama)
+  to the computed output budget, so a model that misses its stop token cannot run on for 10k+ tokens.
 - **No truncation**: nothing is silently dropped. If the notes cannot be reduced to fit the context
-  window, the command fails with an actionable error asking the user to increase the model's context
-  window in LM Studio (and the matching setting). Raising the context makes chunks larger and reduces
-  the number of requests.
+  window, the command fails with an actionable error suggesting a larger context (e.g. double the
+  current value). The UI hint recommends 8192 for short recordings and 16384–32768 for long days.
 - HTTP failures include the server's response body (up to 800 chars), so messages such as LM Studio's
   context-overflow details are surfaced to the user.
 - The Settings panel stages provider/endpoint/model edits, requires confirmation before applying,

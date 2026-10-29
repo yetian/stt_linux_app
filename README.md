@@ -206,6 +206,7 @@ git push origin HEAD
 
 | Version | Changes |
 | --- | --- |
+| 0.1.37 | Summary output is now capped (`max_tokens` / `num_predict` = ~1/4 of the context window) so models that miss their stop token can't ramble for 10k+ tokens; prompts now ask for concise, dense bullets, and the context-window hint/error suggests suitable values. |
 | 0.1.36 | New "LLM context window" setting (default 8192); chunk sizes now derive from it so raising the window means fewer, larger chunks. Summarization never truncates content — if it cannot fit, it asks you to increase the context window instead. |
 | 0.1.35 | Chunked summarization reworked to avoid runaway generation: intermediate steps only produce short fact-notes (map), which are merged in budget-sized batches and rendered once at the end — a handful of LLM calls instead of dozens. |
 | 0.1.34 | Long transcripts and day summaries are chunked (map-reduce) before hitting the LLM, so they no longer fail with `exceed_context_size_error` on small context windows (e.g. 8192). |

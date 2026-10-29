@@ -175,6 +175,6 @@
     "confirmTitle": "确认应用配置更改？",
     "confirmMessage": "以下内容将被修改：{fields}",
     "contextSize": "LLM 上下文窗口（tokens）",
-    "contextSizeHint": "需与 LM Studio 中加载模型时的上下文长度一致。数值越大，分段越少、越大。"
+    "contextSizeHint": "需与 LM Studio 中加载模型时的上下文长度一致。建议：短录音用 8192，整天的长录音用 16384–32768。总结输出上限约为该值的 1/4。"
   }
 }

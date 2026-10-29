@@ -7,7 +7,7 @@ import type { SummaryProvider } from "@/types";
 export type AudioLanguage = "auto" | "zh" | "en" | "de" | "fr" | "es" | "ja";
 
 export const DEFAULT_CONTEXT_TOKENS = 8192;
-const MIN_CONTEXT_TOKENS = 1024;
+const MIN_CONTEXT_TOKENS = 4096;
 const MAX_CONTEXT_TOKENS = 131072;
 
 function normalizeContextSize(value: number): number {

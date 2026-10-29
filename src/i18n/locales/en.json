@@ -175,6 +175,6 @@
     "confirmTitle": "Apply configuration changes?",
     "confirmMessage": "The following will change: {fields}",
     "contextSize": "LLM context window (tokens)",
-    "contextSizeHint": "Must match the context length the model is loaded with in LM Studio. Larger values mean fewer, larger summary chunks."
+    "contextSizeHint": "Must match the context length the model is loaded with in LM Studio. Recommended: 8192 for short recordings, 16384–32768 for long days. Summaries are capped to ~1/4 of this."
   }
 }
