@@ -25,5 +25,6 @@ export const groupApi = {
       endpoint: params.endpoint,
       model: params.model,
       targetLanguage: params.targetLanguage,
+      contextTokens: params.contextTokens,
     }),
 };

@@ -6,6 +6,7 @@ export interface SummarizeParams {
   endpoint: string;
   model: string;
   targetLanguage: string;
+  contextTokens: number;
 }
 
 export const llmApi = {
@@ -16,6 +17,7 @@ export const llmApi = {
       endpoint: params.endpoint,
       model: params.model,
       targetLanguage: params.targetLanguage,
+      contextTokens: params.contextTokens,
     }),
 
   summarizeRecording: (recordingId: string, params: SummarizeParams) =>
@@ -25,6 +27,7 @@ export const llmApi = {
       endpoint: params.endpoint,
       model: params.model,
       targetLanguage: params.targetLanguage,
+      contextTokens: params.contextTokens,
     }),
 
   listModels: (provider: SummaryProvider, endpoint: string) =>

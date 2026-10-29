@@ -173,6 +173,8 @@
     "apply": "Änderungen anwenden",
     "discard": "Verwerfen",
     "confirmTitle": "Konfigurationsänderungen anwenden?",
-    "confirmMessage": "Folgendes wird geändert: {fields}"
+    "confirmMessage": "Folgendes wird geändert: {fields}",
+    "contextSize": "LLM-Kontextfenster (Tokens)",
+    "contextSizeHint": "Muss der Kontextlänge entsprechen, mit der das Modell in LM Studio geladen ist. Größere Werte bedeuten weniger, größere Zusammenfassungsblöcke."
   }
 }

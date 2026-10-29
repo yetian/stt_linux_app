@@ -104,13 +104,17 @@ v
 - Sends HTTP POST requests to Ollama API (`http://127.0.0.1:11434/api/generate`) or custom OpenAI endpoints.
 - Dynamically adapts system prompt according to the user's selected UI target language.
 - **Chunked (map-reduce) summarization**: long inputs are estimated in tokens (`~1 token / 4 ASCII
-  chars`, `1 token / non-ASCII char`) and split into ≤4000-token chunks (at line boundaries, hard-split
-  if a single line is huge). Each chunk is condensed to a short **fact-note list** (map), notes are
-  merged in budget-sized batches (reduce, max 5 levels), and only the final small note set is rendered
-  with the full detailed prompt. Intermediate steps never use the verbose output format, so the number
-  of requests stays close to `ceil(input_tokens / 4000) + a few` rather than re-summarizing the whole
-  output on every pass. This keeps every request under a small context window (e.g. 8192) without an
-  `exceed_context_size_error` and without runaway generation.
+  chars`, `1 token / non-ASCII char`) and split into chunks sized from the user's **context window**
+  setting (`content_budget = context - 2600` reserve for system prompt + output, clamped 1000–28000;
+  default 8192). Chunks split at line boundaries (hard-split if a single line is huge). Each chunk is
+  condensed to a short **fact-note list** (map), notes are merged in budget-sized batches (reduce, max
+  8 levels), and only the final small note set is rendered once with the full detailed prompt.
+  Intermediate steps never use the verbose output format, so the number of requests stays close to
+  `ceil(input_tokens / budget) + a few` instead of re-summarizing the whole output on every pass.
+- **No truncation**: nothing is silently dropped. If the notes cannot be reduced to fit the context
+  window, the command fails with an actionable error asking the user to increase the model's context
+  window in LM Studio (and the matching setting). Raising the context makes chunks larger and reduces
+  the number of requests.
 - HTTP failures include the server's response body (up to 800 chars), so messages such as LM Studio's
   context-overflow details are surfaced to the user.
 - The Settings panel stages provider/endpoint/model edits, requires confirmation before applying,
@@ -239,7 +243,7 @@ Settings restore on every launch instead of reverting to hardcoded defaults:
 - Every change writes localStorage immediately and invokes `save_settings` (upsert). If a change
   lands while `hydrate()` is in flight, the cache wins and is written back to SQLite.
 - Persisted keys: `uiLocale`, `audioLanguage`, `outputLanguage`, `summaryProvider`,
-  `ollamaEndpoint`, `openaiEndpoint`, `ollamaModel`, `openaiModel`, `useGpu`.
+  `ollamaEndpoint`, `openaiEndpoint`, `ollamaModel`, `openaiModel`, `useGpu`, `llmContextSize`.
 - The Settings view stages edits in a `draft`; the draft re-syncs from the store after hydration
   unless the user has staged unsaved changes of their own.
 

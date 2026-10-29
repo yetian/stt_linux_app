@@ -286,6 +286,7 @@ pub async fn summarize_group(
     endpoint: String,
     model: String,
     target_language: String,
+    context_tokens: Option<u32>,
 ) -> AppResult<String> {
     let recordings = {
         let conn = state.connection();
@@ -318,6 +319,7 @@ pub async fn summarize_group(
         endpoint,
         model,
         target_language,
+        context_tokens: context_tokens.unwrap_or(llm::DEFAULT_CONTEXT_TOKENS),
     };
 
     progress::emit(&app, &group_id, "summarizing", Some("connecting"), None);
@@ -340,12 +342,14 @@ pub async fn summarize_text(
     endpoint: String,
     model: String,
     target_language: String,
+    context_tokens: Option<u32>,
 ) -> AppResult<String> {
     let options = SummarizeOptions {
         provider,
         endpoint,
         model,
         target_language,
+        context_tokens: context_tokens.unwrap_or(llm::DEFAULT_CONTEXT_TOKENS),
     };
     llm::summarize(&transcript, &options).await
 }
@@ -359,6 +363,7 @@ pub async fn summarize_recording(
     endpoint: String,
     model: String,
     target_language: String,
+    context_tokens: Option<u32>,
 ) -> AppResult<String> {
     let transcript = {
         let conn = state.connection();
@@ -373,6 +378,7 @@ pub async fn summarize_recording(
         endpoint,
         model,
         target_language,
+        context_tokens: context_tokens.unwrap_or(llm::DEFAULT_CONTEXT_TOKENS),
     };
 
     progress::emit(&app, &recording_id, "summarizing", Some("connecting"), None);

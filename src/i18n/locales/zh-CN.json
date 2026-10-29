@@ -173,6 +173,8 @@
     "apply": "应用更改",
     "discard": "放弃",
     "confirmTitle": "确认应用配置更改？",
-    "confirmMessage": "以下内容将被修改：{fields}"
+    "confirmMessage": "以下内容将被修改：{fields}",
+    "contextSize": "LLM 上下文窗口（tokens）",
+    "contextSizeHint": "需与 LM Studio 中加载模型时的上下文长度一致。数值越大，分段越少、越大。"
   }
 }

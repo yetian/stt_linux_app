@@ -173,6 +173,8 @@
     "apply": "Apply changes",
     "discard": "Discard",
     "confirmTitle": "Apply configuration changes?",
-    "confirmMessage": "The following will change: {fields}"
+    "confirmMessage": "The following will change: {fields}",
+    "contextSize": "LLM context window (tokens)",
+    "contextSizeHint": "Must match the context length the model is loaded with in LM Studio. Larger values mean fewer, larger summary chunks."
   }
 }

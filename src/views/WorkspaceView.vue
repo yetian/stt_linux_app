@@ -128,6 +128,7 @@ async function runSummarize(): Promise<void> {
       endpoint: settings.activeEndpoint,
       model: settings.activeModel,
       targetLanguage: settings.outputLanguage,
+      contextTokens: settings.llmContextSize,
     });
     await projects.loadRecordings();
     pipeline.succeed();

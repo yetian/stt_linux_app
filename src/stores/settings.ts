@@ -6,6 +6,15 @@ import type { SummaryProvider } from "@/types";
 
 export type AudioLanguage = "auto" | "zh" | "en" | "de" | "fr" | "es" | "ja";
 
+export const DEFAULT_CONTEXT_TOKENS = 8192;
+const MIN_CONTEXT_TOKENS = 1024;
+const MAX_CONTEXT_TOKENS = 131072;
+
+function normalizeContextSize(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_CONTEXT_TOKENS;
+  return Math.min(MAX_CONTEXT_TOKENS, Math.max(MIN_CONTEXT_TOKENS, Math.round(value)));
+}
+
 export interface AudioLanguageOption {
   value: AudioLanguage;
   label: string;
@@ -35,6 +44,7 @@ interface SettingsSnapshot {
   ollamaModel: string;
   openaiModel: string;
   useGpu: boolean;
+  llmContextSize: number;
 }
 
 function serialize(snapshot: SettingsSnapshot): SettingsMap {
@@ -48,6 +58,7 @@ function serialize(snapshot: SettingsSnapshot): SettingsMap {
     ollamaModel: snapshot.ollamaModel,
     openaiModel: snapshot.openaiModel,
     useGpu: snapshot.useGpu ? "true" : "false",
+    llmContextSize: String(snapshot.llmContextSize),
   };
 }
 
@@ -75,6 +86,11 @@ function deserialize(raw: SettingsMap): Partial<SettingsSnapshot> {
   if (raw.openaiEndpoint !== undefined) snapshot.openaiEndpoint = raw.openaiEndpoint;
   if (raw.ollamaModel !== undefined) snapshot.ollamaModel = raw.ollamaModel;
   if (raw.openaiModel !== undefined) snapshot.openaiModel = raw.openaiModel;
+
+  if (raw.llmContextSize !== undefined) {
+    const parsed = Number(raw.llmContextSize);
+    if (Number.isFinite(parsed)) snapshot.llmContextSize = normalizeContextSize(parsed);
+  }
 
   return snapshot;
 }
@@ -110,6 +126,7 @@ export const useSettingsStore = defineStore("settings", () => {
   const ollamaModel = ref("qwen2.5:14b");
   const openaiModel = ref("");
   const useGpu = ref(true);
+  const llmContextSize = ref(DEFAULT_CONTEXT_TOKENS);
 
   const activeEndpoint = computed(() =>
     summaryProvider.value === "ollama" ? ollamaEndpoint.value : openaiEndpoint.value,
@@ -141,6 +158,10 @@ export const useSettingsStore = defineStore("settings", () => {
     outputLanguage.value = language;
   }
 
+  function setLlmContextSize(value: number): void {
+    llmContextSize.value = normalizeContextSize(value);
+  }
+
   function collect(): SettingsSnapshot {
     return {
       uiLocale: uiLocale.value,
@@ -152,6 +173,7 @@ export const useSettingsStore = defineStore("settings", () => {
       ollamaModel: ollamaModel.value,
       openaiModel: openaiModel.value,
       useGpu: useGpu.value,
+      llmContextSize: llmContextSize.value,
     };
   }
 
@@ -167,6 +189,7 @@ export const useSettingsStore = defineStore("settings", () => {
     if (snapshot.ollamaModel !== undefined) ollamaModel.value = snapshot.ollamaModel;
     if (snapshot.openaiModel !== undefined) openaiModel.value = snapshot.openaiModel;
     if (snapshot.useGpu !== undefined) useGpu.value = snapshot.useGpu;
+    if (snapshot.llmContextSize !== undefined) llmContextSize.value = snapshot.llmContextSize;
     // last: setUiLocale() above must not clobber a restored output language
     if (snapshot.outputLanguage !== undefined) outputLanguage.value = snapshot.outputLanguage;
   }
@@ -222,11 +245,13 @@ export const useSettingsStore = defineStore("settings", () => {
     ollamaModel,
     openaiModel,
     useGpu,
+    llmContextSize,
     activeEndpoint,
     activeModel,
     setLocale,
     setAudioLanguage,
     setOutputLanguage,
+    setLlmContextSize,
     hydrate,
   };
 });

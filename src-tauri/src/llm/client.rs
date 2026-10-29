@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 use crate::error::{AppError, AppResult};
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(600);
+pub const DEFAULT_CONTEXT_TOKENS: u32 = 8_192;
+const CONTEXT_RESERVED_TOKENS: usize = 2_600;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -19,6 +21,7 @@ pub struct SummarizeOptions {
     pub endpoint: String,
     pub model: String,
     pub target_language: String,
+    pub context_tokens: u32,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -108,8 +111,13 @@ pub async fn summarize_group(document: &str, options: &SummarizeOptions) -> AppR
     summarize_long(&system, document, options).await
 }
 
-const CONTENT_TOKEN_BUDGET: usize = 4_000;
-const MAX_REDUCE_PASSES: usize = 5;
+const MAX_REDUCE_PASSES: usize = 8;
+
+fn content_budget(context_tokens: u32) -> usize {
+    (context_tokens as usize)
+        .saturating_sub(CONTEXT_RESERVED_TOKENS)
+        .clamp(1_000, 28_000)
+}
 
 const MAP_PROMPT: &str = "You are extracting facts from ONE part of a longer source so the parts can be merged later. Reply ONLY with terse bullet notes covering every substantive detail: people and roles, numbers, amounts, dates and deadlines, decisions and their rationale, options considered, and open questions. Write the notes in the same language as the source. Do not write prose, section headings, or a summary; do not omit details; never invent anything. Keep each bullet short.";
 
@@ -128,17 +136,14 @@ fn estimate_tokens(text: &str) -> usize {
     units.div_ceil(4)
 }
 
-fn truncate_to_tokens(text: &str, budget: usize) -> String {
-    let limit = budget * 4;
-    let mut units = 0usize;
-    let mut output = String::new();
-    for character in text.chars() {
-        let increment = char_units(character);
-        if units + increment > limit {
-            break;
+fn split_oversized(notes: Vec<String>, budget: usize) -> Vec<String> {
+    let mut output = Vec::new();
+    for note in notes {
+        if estimate_tokens(&note) > budget {
+            output.extend(split_chunks(&note, budget));
+        } else {
+            output.push(note);
         }
-        output.push(character);
-        units += increment;
     }
     output
 }
@@ -215,43 +220,61 @@ fn batch_by_budget(items: &[String], budget: usize) -> Vec<Vec<String>> {
     batches
 }
 
-async fn summarize_long(
-    system: &str,
-    user: &str,
+async fn compress_to_budget(
+    mut notes: Vec<String>,
+    budget: usize,
     options: &SummarizeOptions,
 ) -> AppResult<String> {
-    if estimate_tokens(user) <= CONTENT_TOKEN_BUDGET {
-        return generate(system, user, options).await;
-    }
-
-    // Map: compact notes per chunk (never more than one budget-sized request).
-    let mut notes = Vec::new();
-    for chunk in split_chunks(user, CONTENT_TOKEN_BUDGET) {
-        let note = generate(MAP_PROMPT, &chunk, options).await?;
-        notes.push(truncate_to_tokens(&note, CONTENT_TOKEN_BUDGET));
-    }
-
-    // Reduce: merge notes in budget-sized batches until they fit in one request.
     let mut levels = 0usize;
-    while notes.len() > 1
-        && estimate_tokens(&notes.join("\n\n")) > CONTENT_TOKEN_BUDGET
-        && levels < MAX_REDUCE_PASSES
-    {
-        let batches = batch_by_budget(&notes, CONTENT_TOKEN_BUDGET);
-        if batches.len() >= notes.len() {
+
+    loop {
+        let joined = notes.join("\n\n");
+        if estimate_tokens(&joined) <= budget {
+            return Ok(joined);
+        }
+        if levels >= MAX_REDUCE_PASSES {
             break;
         }
+
+        let expanded = split_oversized(notes, budget);
+        let batches = batch_by_budget(&expanded, budget);
+        if batches.len() >= expanded.len() {
+            break;
+        }
+
         let mut next = Vec::with_capacity(batches.len());
         for batch in batches {
-            let note = generate(REDUCE_PROMPT, &batch.join("\n\n"), options).await?;
-            next.push(truncate_to_tokens(&note, CONTENT_TOKEN_BUDGET));
+            next.push(generate(REDUCE_PROMPT, &batch.join("\n\n"), options).await?);
         }
         notes = next;
         levels += 1;
     }
 
-    // Final: render the requested summary from the consolidated notes.
-    let merged = truncate_to_tokens(&notes.join("\n\n"), CONTENT_TOKEN_BUDGET);
+    Err(AppError::msg(format!(
+        "input is too large for the configured context window ({} tokens); increase the model's context window in LM Studio (or the context-window setting) and try again",
+        options.context_tokens
+    )))
+}
+
+async fn summarize_long(
+    system: &str,
+    user: &str,
+    options: &SummarizeOptions,
+) -> AppResult<String> {
+    let budget = content_budget(options.context_tokens);
+    if estimate_tokens(user) <= budget {
+        return generate(system, user, options).await;
+    }
+
+    // Map: compact fact-notes per chunk (one budget-sized request each).
+    let mut notes = Vec::new();
+    for chunk in split_chunks(user, budget) {
+        notes.push(generate(MAP_PROMPT, &chunk, options).await?);
+    }
+
+    // Reduce: merge notes in budget-sized batches. Nothing is truncated.
+    let merged = compress_to_budget(notes, budget, options).await?;
+
     let final_input = format!(
         "The following are consolidated notes extracted from the complete source. Produce the final summary from them.\n\n{merged}"
     );
@@ -541,10 +564,19 @@ mod tests {
     }
 
     #[test]
-    fn truncates_to_token_budget() {
-        let text = "a".repeat(100);
-        let truncated = truncate_to_tokens(&text, 10);
-        assert_eq!(truncated.len(), 40);
+    fn derives_content_budget_from_context_window() {
+        assert_eq!(content_budget(8_192), 5_592);
+        assert!(content_budget(32_768) > content_budget(8_192));
+        assert_eq!(content_budget(1_000), 1_000);
+    }
+
+    #[test]
+    fn splits_oversized_notes_without_dropping_text() {
+        let notes = vec!["a".repeat(2_000), "b".repeat(10)];
+        let split = split_oversized(notes, 50);
+
+        assert!(split.iter().all(|note| estimate_tokens(note) <= 50));
+        assert_eq!(split.concat(), format!("{}{}", "a".repeat(2_000), "b".repeat(10)));
     }
 
     #[test]

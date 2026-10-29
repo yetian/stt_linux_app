@@ -119,6 +119,7 @@ export const useGroupsStore = defineStore("groups", () => {
         endpoint: settings.activeEndpoint,
         model: settings.activeModel,
         targetLanguage: settings.outputLanguage,
+        contextTokens: settings.llmContextSize,
       });
       await loadGroups();
     } catch (cause) {
@@ -175,6 +176,7 @@ export const useGroupsStore = defineStore("groups", () => {
             endpoint: settings.activeEndpoint,
             model: settings.activeModel,
             targetLanguage: settings.outputLanguage,
+            contextTokens: settings.llmContextSize,
           });
           pipeline.succeed();
         } catch (cause) {

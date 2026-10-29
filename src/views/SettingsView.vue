@@ -59,6 +59,11 @@ const draftModel = computed({
   },
 });
 
+const contextSize = computed({
+  get: () => settings.llmContextSize,
+  set: (value: number) => settings.setLlmContextSize(value),
+});
+
 const changedFields = computed(() => {
   const fields: string[] = [];
   if (draft.provider !== settings.summaryProvider) fields.push(t("settings.provider"));
@@ -291,6 +296,21 @@ function onProvider(event: Event): void {
           <span class="mt-0.5 block text-[10px] text-base-500">{{ t("settings.useGpuHint") }}</span>
         </span>
         <input v-model="settings.useGpu" type="checkbox" class="size-4 accent-sky-500" />
+      </label>
+      <label class="flex items-center justify-between gap-3">
+        <span class="text-xs text-slate-300">
+          {{ t("settings.contextSize") }}
+          <span class="mt-0.5 block text-[10px] text-base-500">
+            {{ t("settings.contextSizeHint") }}
+          </span>
+        </span>
+        <input
+          v-model.number="contextSize"
+          type="number"
+          min="1024"
+          step="1024"
+          class="w-28 rounded-md border border-base-700 bg-base-850 px-2 py-1 text-right font-mono text-xs text-slate-200 outline-none focus:border-accent-500"
+        />
       </label>
     </section>
 
