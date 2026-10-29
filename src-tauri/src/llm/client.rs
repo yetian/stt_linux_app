@@ -108,8 +108,12 @@ pub async fn summarize_group(document: &str, options: &SummarizeOptions) -> AppR
     summarize_long(&system, document, options).await
 }
 
-const CONTENT_TOKEN_BUDGET: usize = 3_000;
+const CONTENT_TOKEN_BUDGET: usize = 4_000;
 const MAX_REDUCE_PASSES: usize = 5;
+
+const MAP_PROMPT: &str = "You are extracting facts from ONE part of a longer source so the parts can be merged later. Reply ONLY with terse bullet notes covering every substantive detail: people and roles, numbers, amounts, dates and deadlines, decisions and their rationale, options considered, and open questions. Write the notes in the same language as the source. Do not write prose, section headings, or a summary; do not omit details; never invent anything. Keep each bullet short.";
+
+const REDUCE_PROMPT: &str = "You are given several sets of notes that cover consecutive parts of one source. Consolidate them into ONE set of terse bullet notes in the same language as the notes: remove duplicates, keep every distinct fact (names, numbers, dates, decisions, rationale), and do not add new information, prose, or headings.";
 
 fn char_units(character: char) -> usize {
     if character.is_ascii() {
@@ -190,10 +194,25 @@ fn split_chunks(text: &str, budget: usize) -> Vec<String> {
     chunks
 }
 
-fn merge_system_prompt(system: &str) -> String {
-    format!(
-        "You are given several partial summaries that together cover the complete source. Merge them into ONE final summary. Preserve every important detail from all parts — names, numbers, dates, decisions, and rationale — without dropping or duplicating information, and never refer to \"parts\" or \"chunks\". Follow exactly the structure and rules below.\n\n{system}"
-    )
+fn batch_by_budget(items: &[String], budget: usize) -> Vec<Vec<String>> {
+    let mut batches: Vec<Vec<String>> = Vec::new();
+    let mut current: Vec<String> = Vec::new();
+    let mut current_tokens = 0usize;
+
+    for item in items {
+        let tokens = estimate_tokens(item);
+        if !current.is_empty() && current_tokens + tokens > budget {
+            batches.push(std::mem::take(&mut current));
+            current_tokens = 0;
+        }
+        current.push(item.clone());
+        current_tokens += tokens;
+    }
+
+    if !current.is_empty() {
+        batches.push(current);
+    }
+    batches
 }
 
 async fn summarize_long(
@@ -205,35 +224,38 @@ async fn summarize_long(
         return generate(system, user, options).await;
     }
 
-    let merge_system = merge_system_prompt(system);
-    let mut current = user.to_string();
-    let mut passes = 0usize;
-
-    loop {
-        let active_system = if passes == 0 { system } else { merge_system.as_str() };
-        let chunks = split_chunks(&current, CONTENT_TOKEN_BUDGET);
-
-        if chunks.len() <= 1 {
-            return generate(active_system, &current, options).await;
-        }
-
-        if passes >= MAX_REDUCE_PASSES {
-            let truncated = truncate_to_tokens(&current, CONTENT_TOKEN_BUDGET);
-            return generate(&merge_system, &truncated, options).await;
-        }
-
-        let mut partials = Vec::with_capacity(chunks.len());
-        for chunk in chunks {
-            partials.push(generate(active_system, &chunk, options).await?);
-        }
-
-        current = partials.join("\n\n---\n\n");
-        passes += 1;
-
-        if estimate_tokens(&current) <= CONTENT_TOKEN_BUDGET {
-            return generate(&merge_system, &current, options).await;
-        }
+    // Map: compact notes per chunk (never more than one budget-sized request).
+    let mut notes = Vec::new();
+    for chunk in split_chunks(user, CONTENT_TOKEN_BUDGET) {
+        let note = generate(MAP_PROMPT, &chunk, options).await?;
+        notes.push(truncate_to_tokens(&note, CONTENT_TOKEN_BUDGET));
     }
+
+    // Reduce: merge notes in budget-sized batches until they fit in one request.
+    let mut levels = 0usize;
+    while notes.len() > 1
+        && estimate_tokens(&notes.join("\n\n")) > CONTENT_TOKEN_BUDGET
+        && levels < MAX_REDUCE_PASSES
+    {
+        let batches = batch_by_budget(&notes, CONTENT_TOKEN_BUDGET);
+        if batches.len() >= notes.len() {
+            break;
+        }
+        let mut next = Vec::with_capacity(batches.len());
+        for batch in batches {
+            let note = generate(REDUCE_PROMPT, &batch.join("\n\n"), options).await?;
+            next.push(truncate_to_tokens(&note, CONTENT_TOKEN_BUDGET));
+        }
+        notes = next;
+        levels += 1;
+    }
+
+    // Final: render the requested summary from the consolidated notes.
+    let merged = truncate_to_tokens(&notes.join("\n\n"), CONTENT_TOKEN_BUDGET);
+    let final_input = format!(
+        "The following are consolidated notes extracted from the complete source. Produce the final summary from them.\n\n{merged}"
+    );
+    generate(system, &final_input, options).await
 }
 
 async fn generate(system: &str, user: &str, options: &SummarizeOptions) -> AppResult<String> {
@@ -506,6 +528,16 @@ mod tests {
         assert!(chunks.len() > 1);
         assert!(chunks.iter().all(|chunk| estimate_tokens(chunk) <= 50));
         assert_eq!(chunks.concat(), text);
+    }
+
+    #[test]
+    fn batches_items_within_budget() {
+        let items = vec!["a".repeat(40), "b".repeat(40), "c".repeat(40)];
+        let batches = batch_by_budget(&items, 20);
+
+        assert_eq!(batches.len(), 2);
+        assert_eq!(batches[0].len(), 2);
+        assert_eq!(batches[1].len(), 1);
     }
 
     #[test]

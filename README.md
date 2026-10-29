@@ -206,6 +206,7 @@ git push origin HEAD
 
 | Version | Changes |
 | --- | --- |
+| 0.1.35 | Chunked summarization reworked to avoid runaway generation: intermediate steps only produce short fact-notes (map), which are merged in budget-sized batches and rendered once at the end — a handful of LLM calls instead of dozens. |
 | 0.1.34 | Long transcripts and day summaries are chunked (map-reduce) before hitting the LLM, so they no longer fail with `exceed_context_size_error` on small context windows (e.g. 8192). |
 | 0.1.33 | LLM errors now include the server's response body (e.g. LM Studio's "Channel Error" detail) instead of only the HTTP status, making failures diagnosable. |
 | 0.1.32 | Repeat/loop protection for transcription: temperature fallback kept enabled and consecutive duplicate segments dropped before saving. |

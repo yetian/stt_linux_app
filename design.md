@@ -104,11 +104,13 @@ v
 - Sends HTTP POST requests to Ollama API (`http://127.0.0.1:11434/api/generate`) or custom OpenAI endpoints.
 - Dynamically adapts system prompt according to the user's selected UI target language.
 - **Chunked (map-reduce) summarization**: long inputs are estimated in tokens (`~1 token / 4 ASCII
-  chars`, `1 token / non-ASCII char`) and split into ≤3000-token chunks (at line boundaries, hard-split
-  if a single line is huge). Each chunk is summarized with the active prompt, the partial summaries are
-  merged with a "combine without losing detail" prompt, and the merge repeats (max 5 passes) until the
-  result fits. This keeps every request well under a small context window (e.g. 8192) instead of failing
-  with an `exceed_context_size_error`.
+  chars`, `1 token / non-ASCII char`) and split into ≤4000-token chunks (at line boundaries, hard-split
+  if a single line is huge). Each chunk is condensed to a short **fact-note list** (map), notes are
+  merged in budget-sized batches (reduce, max 5 levels), and only the final small note set is rendered
+  with the full detailed prompt. Intermediate steps never use the verbose output format, so the number
+  of requests stays close to `ceil(input_tokens / 4000) + a few` rather than re-summarizing the whole
+  output on every pass. This keeps every request under a small context window (e.g. 8192) without an
+  `exceed_context_size_error` and without runaway generation.
 - HTTP failures include the server's response body (up to 800 chars), so messages such as LM Studio's
   context-overflow details are surfaced to the user.
 - The Settings panel stages provider/endpoint/model edits, requires confirmation before applying,
