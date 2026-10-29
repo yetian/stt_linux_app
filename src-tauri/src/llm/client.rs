@@ -34,7 +34,7 @@ pub fn build_system_prompt(target_language: &str) -> String {
     format!(
         r##"You are an expert meeting analyst and executive assistant. The transcript below may contain several completely different meetings or conversations that are unrelated to each other, and each of those may in turn cover multiple topics. Do NOT assume it is one continuous meeting.
 
-Analyze it and reply ONLY with structured GitHub-flavored Markdown written in {target_language}. Use exactly this structure:
+Analyze it and reply ONLY with structured GitHub-flavored Markdown written in {target_language}. The ENTIRE response — section headings, labels, and every sentence — must be in {target_language}; never answer in the transcript's language and never switch languages. Use exactly this structure (translate the headings into {target_language}):
 
 # Summary
 
@@ -60,7 +60,7 @@ Rules:
 - Use only information present in the transcript; never invent facts.
 - Merge duplicate or repeated points within the same meeting/topic; keep the result concise and skimmable.
 - Be concise: one short line per bullet, no filler, no repeated points, and no commentary outside the required sections.
-- Always write the output in {target_language}, even if the transcript is in another language.
+- Always write the output in {target_language}, even if the transcript is in another language. Begin AND end the response in {target_language}; do not drift into another language near the end.
 - Keep speaker names if given; otherwise use the "Speaker N" labels from the transcript. Stop after the last required section."##
     )
 }
@@ -69,9 +69,9 @@ pub fn build_group_system_prompt(target_language: &str) -> String {
     format!(
         r##"You are an expert meeting analyst and executive assistant. You are given the individual summaries (or, when a summary is missing, the transcript) of several recordings that all belong to the same group — typically a single day. The recordings may cover completely unrelated meetings and topics.
 
-Produce ONE consolidated roll-up of the whole group in structured GitHub-flavored Markdown written in {target_language}. Keep it information-dense but concise: include every substantive fact (names, numbers, figures, dates, amounts, decisions and their rationale) using short bullets — no filler, no repetition, no preamble, and no closing remarks. Stop as soon as the required sections are complete.
+Produce ONE consolidated roll-up of the whole group in structured GitHub-flavored Markdown written in {target_language}. The ENTIRE response — section headings, labels, and every sentence — must be in {target_language}; the sources may be in another language, but you must never answer in it or switch languages. Keep it information-dense but concise: include every substantive fact (names, numbers, figures, dates, amounts, decisions and their rationale) using short bullets — no filler, no repetition, no preamble, and no closing remarks. Stop as soon as the required sections are complete.
 
-Use exactly this structure:
+Use exactly this structure (translate the headings into {target_language}):
 
 # Group Summary
 
@@ -98,7 +98,7 @@ Rules:
 - Preserve specificity: keep exact names, numbers, dates, and figures rather than generalizing them away.
 - Merge only items that clearly repeat across meetings; otherwise keep each section self-contained and complete.
 - Be concise: one short line per bullet, no filler, no repeated points, no commentary outside the required sections.
-- Always write the output in {target_language}, even if the sources are in another language.
+- Always write the output in {target_language}, even if the sources are in another language. Begin AND end the response in {target_language}; do not drift into English or any other language near the end.
 - Stay organized with headings and bullets so the added detail remains skimmable. Never exceed what is needed to cover the required sections."##
     )
 }
@@ -126,9 +126,45 @@ fn content_budget(context_tokens: u32) -> usize {
         .clamp(1_000, 48_000)
 }
 
-const MAP_PROMPT: &str = "You are extracting facts from ONE part of a longer source so the parts can be merged later. Reply ONLY with terse bullet notes covering every substantive detail: people and roles, numbers, amounts, dates and deadlines, decisions and their rationale, options considered, and open questions. Write the notes in the same language as the source. Do not write prose, section headings, or a summary; do not omit details; never invent anything. Keep each bullet short.";
+fn final_notes_budget(context_tokens: u32) -> usize {
+    ((context_tokens as usize) / 2)
+        .saturating_sub(SYSTEM_PROMPT_RESERVE_TOKENS)
+        .max(1_000)
+}
 
-const REDUCE_PROMPT: &str = "You are given several sets of notes that cover consecutive parts of one source. Consolidate them into ONE set of terse bullet notes in the same language as the notes: remove duplicates, keep every distinct fact (names, numbers, dates, decisions, rationale), and do not add new information, prose, or headings.";
+fn available_output(context_tokens: u32, input: &str) -> usize {
+    (context_tokens as usize)
+        .saturating_sub(estimate_tokens(input))
+        .saturating_sub(SYSTEM_PROMPT_RESERVE_TOKENS)
+        .clamp(512, 16_384)
+}
+
+fn take_last_tokens(text: &str, budget: usize) -> String {
+    let limit = budget * 4;
+    let mut units = 0usize;
+    let mut buffer: Vec<char> = Vec::new();
+    for character in text.chars().rev() {
+        let increment = char_units(character);
+        if units + increment > limit {
+            break;
+        }
+        buffer.push(character);
+        units += increment;
+    }
+    buffer.into_iter().rev().collect()
+}
+
+fn map_prompt(target_language: &str) -> String {
+    format!(
+        "You are extracting facts from ONE part of a longer source so the parts can be merged later. Reply ONLY with terse bullet notes written in {target_language}, covering every substantive detail: people and roles, numbers, amounts, dates and deadlines, decisions and their rationale, options considered, and open questions. Write ONLY in {target_language}, even if the source is in another language. Do not write prose, section headings, or a summary; do not omit details; never invent anything. Keep each bullet short."
+    )
+}
+
+fn reduce_prompt(target_language: &str) -> String {
+    format!(
+        "You are given several sets of notes that cover consecutive parts of one source. Consolidate them into ONE set of terse bullet notes written in {target_language}: remove duplicates, keep every distinct fact (names, numbers, dates, decisions, rationale), and do not add new information, prose, or headings. Write ONLY in {target_language}."
+    )
+}
 
 fn char_units(character: char) -> usize {
     if character.is_ascii() {
@@ -230,6 +266,7 @@ fn batch_by_budget(items: &[String], budget: usize) -> Vec<Vec<String>> {
 async fn compress_to_budget(
     mut notes: Vec<String>,
     budget: usize,
+    reduce_system: &str,
     options: &SummarizeOptions,
 ) -> AppResult<String> {
     let mut levels = 0usize;
@@ -251,7 +288,7 @@ async fn compress_to_budget(
 
         let mut next = Vec::with_capacity(batches.len());
         for batch in batches {
-            next.push(generate(REDUCE_PROMPT, &batch.join("\n\n"), options).await?);
+            next.push(generate(reduce_system, &batch.join("\n\n"), options).await?.text);
         }
         notes = next;
         levels += 1;
@@ -264,35 +301,97 @@ async fn compress_to_budget(
     )))
 }
 
+async fn finish_summary(
+    system: &str,
+    user: &str,
+    options: &SummarizeOptions,
+) -> AppResult<String> {
+    let context = options.context_tokens;
+    let limit = available_output(context, user);
+    let mut result = generate_with_limit(system, user, options, limit).await?;
+    let mut output = result.text;
+    let mut rounds = 0usize;
+
+    while result.truncated && rounds < 2 {
+        rounds += 1;
+        let tail = take_last_tokens(&output, (limit / 2).max(256));
+        let continuation = format!(
+            "Continue the summary exactly where it stopped. Do not repeat any earlier text. Finish the remaining sections and then stop. Write only in {}.\n\n--- text so far ---\n{}",
+            options.target_language, tail
+        );
+        let continuation_limit = available_output(context, &continuation);
+        result = generate_with_limit(system, &continuation, options, continuation_limit).await?;
+        output.push_str(&result.text);
+    }
+
+    if result.truncated {
+        return Err(AppError::msg(format!(
+            "summary was cut off at the output limit; increase the LLM context window (currently {} tokens) so it has room to finish",
+            context
+        )));
+    }
+
+    Ok(output)
+}
+
 async fn summarize_long(
     system: &str,
     user: &str,
     options: &SummarizeOptions,
 ) -> AppResult<String> {
-    let budget = content_budget(options.context_tokens);
-    if estimate_tokens(user) <= budget {
-        return generate(system, user, options).await;
+    let context = options.context_tokens;
+    let single_budget = final_notes_budget(context);
+    if estimate_tokens(user) <= single_budget {
+        return finish_summary(system, user, options).await;
     }
 
-    // Map: compact fact-notes per chunk (one budget-sized request each).
+    // Map: compact fact-notes per chunk, already written in the target language.
+    let map_system = map_prompt(&options.target_language);
     let mut notes = Vec::new();
-    for chunk in split_chunks(user, budget) {
-        notes.push(generate(MAP_PROMPT, &chunk, options).await?);
+    for chunk in split_chunks(user, content_budget(context)) {
+        notes.push(generate(&map_system, &chunk, options).await?.text);
     }
 
-    // Reduce: merge notes in budget-sized batches. Nothing is truncated.
-    let merged = compress_to_budget(notes, budget, options).await?;
+    // Reduce to a smaller note set so the final render gets ~half the window for output.
+    let reduce_system = reduce_prompt(&options.target_language);
+    let merged = compress_to_budget(
+        notes,
+        final_notes_budget(context),
+        &reduce_system,
+        options,
+    )
+    .await?;
 
     let final_input = format!(
-        "The following are consolidated notes extracted from the complete source. Produce the final summary from them.\n\n{merged}"
+        "Write the final summary in {}. The following are consolidated notes extracted from the complete source; the source may be in another language.\n\n{merged}",
+        options.target_language
     );
-    generate(system, &final_input, options).await
+    finish_summary(system, &final_input, options).await
 }
 
-async fn generate(system: &str, user: &str, options: &SummarizeOptions) -> AppResult<String> {
+struct Generated {
+    text: String,
+    truncated: bool,
+}
+
+async fn generate(
+    system: &str,
+    user: &str,
+    options: &SummarizeOptions,
+) -> AppResult<Generated> {
+    let max_tokens = output_budget(options.context_tokens);
+    generate_with_limit(system, user, options, max_tokens).await
+}
+
+async fn generate_with_limit(
+    system: &str,
+    user: &str,
+    options: &SummarizeOptions,
+    max_tokens: usize,
+) -> AppResult<Generated> {
     match options.provider {
-        SummaryProvider::Ollama => ollama_generate(system, user, options).await,
-        SummaryProvider::Openai => openai_chat(system, user, options).await,
+        SummaryProvider::Ollama => ollama_generate(system, user, options, max_tokens).await,
+        SummaryProvider::Openai => openai_chat(system, user, options, max_tokens).await,
     }
 }
 
@@ -337,13 +436,16 @@ struct OllamaRequest<'a> {
 #[derive(Deserialize)]
 struct OllamaResponse {
     response: String,
+    #[serde(default)]
+    done_reason: Option<String>,
 }
 
 async fn ollama_generate(
     system: &str,
     user: &str,
     options: &SummarizeOptions,
-) -> AppResult<String> {
+    max_tokens: usize,
+) -> AppResult<Generated> {
     let url = format!("{}/api/generate", normalize(&options.endpoint));
 
     let payload = OllamaRequest {
@@ -352,7 +454,7 @@ async fn ollama_generate(
         system,
         stream: false,
         options: OllamaOptions {
-            num_predict: output_budget(options.context_tokens),
+            num_predict: max_tokens,
         },
     };
 
@@ -367,7 +469,10 @@ async fn ollama_generate(
     }
 
     let body: OllamaResponse = response.json().await?;
-    Ok(body.response)
+    Ok(Generated {
+        text: body.response,
+        truncated: body.done_reason.as_deref() == Some("length"),
+    })
 }
 
 #[derive(Serialize)]
@@ -392,6 +497,8 @@ struct OpenAiResponse {
 #[derive(Deserialize)]
 struct OpenAiChoice {
     message: OpenAiMessageResponse,
+    #[serde(default)]
+    finish_reason: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -403,7 +510,8 @@ async fn openai_chat(
     system: &str,
     user: &str,
     options: &SummarizeOptions,
-) -> AppResult<String> {
+    max_tokens: usize,
+) -> AppResult<Generated> {
     let url = format!("{}/chat/completions", normalize(&options.endpoint));
 
     let payload = OpenAiRequest {
@@ -419,7 +527,7 @@ async fn openai_chat(
             },
         ],
         stream: false,
-        max_tokens: output_budget(options.context_tokens),
+        max_tokens,
     };
 
     let response = http_client()?
@@ -433,11 +541,20 @@ async fn openai_chat(
     }
 
     let body: OpenAiResponse = response.json().await?;
-    body.choices
+    let choice = body
+        .choices
         .into_iter()
         .next()
-        .and_then(|choice| choice.message.content)
-        .ok_or_else(|| AppError::msg("llm returned an empty response"))
+        .ok_or_else(|| AppError::msg("llm returned an empty response"))?;
+    let text = choice
+        .message
+        .content
+        .ok_or_else(|| AppError::msg("llm returned an empty response"))?;
+
+    Ok(Generated {
+        text,
+        truncated: choice.finish_reason.as_deref() == Some("length"),
+    })
 }
 
 #[derive(Deserialize)]
@@ -591,6 +708,18 @@ mod tests {
         assert_eq!(content_budget(8_192), 5_144);
         assert!(content_budget(32_768) > content_budget(8_192));
         assert_eq!(content_budget(1_000), 1_000);
+    }
+
+    #[test]
+    fn final_render_budgets_share_the_window() {
+        assert_eq!(final_notes_budget(8_192), 3_096);
+        assert_eq!(available_output(8_192, &"a".repeat(40)), 7_182);
+    }
+
+    #[test]
+    fn takes_the_last_tokens_for_continuation() {
+        assert_eq!(take_last_tokens("abcdefghij", 1), "ghij");
+        assert_eq!(take_last_tokens("hello", 10), "hello");
     }
 
     #[test]

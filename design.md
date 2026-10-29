@@ -111,11 +111,18 @@ v
   huge). Each chunk is condensed to a short **fact-note list** (map), notes are merged in budget-sized
   batches (reduce, max 8 levels), and only the final small note set is rendered once with the full
   prompt. Requests stay close to `ceil(input_tokens / content) + a few`.
-- **Output is capped**: every request sets `max_tokens` (OpenAI-compatible) / `num_predict` (Ollama)
-  to the computed output budget, so a model that misses its stop token cannot run on for 10k+ tokens.
-- **No truncation**: nothing is silently dropped. If the notes cannot be reduced to fit the context
-  window, the command fails with an actionable error suggesting a larger context (e.g. double the
-  current value). The UI hint recommends 8192 for short recordings and 16384–32768 for long days.
+- **Output is capped**: map/reduce requests set `max_tokens` (OpenAI-compatible) / `num_predict`
+  (Ollama) to `context/4`, so a model that misses its stop token cannot run on for 10k+ tokens. The
+  final render is different: notes are compressed to `context/2 - 1000`, leaving the other ~half of
+  the window as output budget, so the finished summary is not cut off.
+- **Truncation detection / continuation**: responses expose `finish_reason` (OpenAI) / `done_reason`
+  (Ollama). If the final render stops with `length`, the tail of the partial summary is sent back with
+  a "continue exactly where you stopped, do not repeat" instruction (up to 2 rounds). If it still
+  cannot finish, the command fails with an actionable error suggesting a larger context.
+- **Language enforcement**: map and reduce notes are already generated in the target language, the
+  final user message repeats the required language, and both system prompts require the *entire*
+  response (headings included) to start and end in the target language.
+- The UI hint recommends 8192 for short recordings and 16384–32768 for long days.
 - HTTP failures include the server's response body (up to 800 chars), so messages such as LM Studio's
   context-overflow details are surfaced to the user.
 - The Settings panel stages provider/endpoint/model edits, requires confirmation before applying,
