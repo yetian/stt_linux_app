@@ -100,12 +100,140 @@ Rules:
 
 pub async fn summarize(transcript: &str, options: &SummarizeOptions) -> AppResult<String> {
     let system = build_system_prompt(&options.target_language);
-    generate(&system, transcript, options).await
+    summarize_long(&system, transcript, options).await
 }
 
 pub async fn summarize_group(document: &str, options: &SummarizeOptions) -> AppResult<String> {
     let system = build_group_system_prompt(&options.target_language);
-    generate(&system, document, options).await
+    summarize_long(&system, document, options).await
+}
+
+const CONTENT_TOKEN_BUDGET: usize = 3_000;
+const MAX_REDUCE_PASSES: usize = 5;
+
+fn char_units(character: char) -> usize {
+    if character.is_ascii() {
+        1
+    } else {
+        4
+    }
+}
+
+fn estimate_tokens(text: &str) -> usize {
+    let units: usize = text.chars().map(char_units).sum();
+    units.div_ceil(4)
+}
+
+fn truncate_to_tokens(text: &str, budget: usize) -> String {
+    let limit = budget * 4;
+    let mut units = 0usize;
+    let mut output = String::new();
+    for character in text.chars() {
+        let increment = char_units(character);
+        if units + increment > limit {
+            break;
+        }
+        output.push(character);
+        units += increment;
+    }
+    output
+}
+
+fn split_hard(text: &str, budget: usize) -> Vec<String> {
+    let limit = budget * 4;
+    let mut pieces = Vec::new();
+    let mut current = String::new();
+    let mut units = 0usize;
+
+    for character in text.chars() {
+        let increment = char_units(character);
+        if units + increment > limit && !current.is_empty() {
+            pieces.push(std::mem::take(&mut current));
+            units = 0;
+        }
+        current.push(character);
+        units += increment;
+    }
+
+    if !current.is_empty() {
+        pieces.push(current);
+    }
+    pieces
+}
+
+fn split_chunks(text: &str, budget: usize) -> Vec<String> {
+    let mut chunks = Vec::new();
+    let mut current = String::new();
+    let mut current_tokens = 0usize;
+
+    for line in text.split_inclusive('\n') {
+        let line_tokens = estimate_tokens(line);
+        if line_tokens > budget {
+            if !current.trim().is_empty() {
+                chunks.push(std::mem::take(&mut current));
+                current_tokens = 0;
+            }
+            chunks.extend(split_hard(line, budget));
+            continue;
+        }
+        if current_tokens + line_tokens > budget && !current.is_empty() {
+            chunks.push(std::mem::take(&mut current));
+            current_tokens = 0;
+        }
+        current.push_str(line);
+        current_tokens += line_tokens;
+    }
+
+    if !current.trim().is_empty() {
+        chunks.push(current);
+    }
+    chunks
+}
+
+fn merge_system_prompt(system: &str) -> String {
+    format!(
+        "You are given several partial summaries that together cover the complete source. Merge them into ONE final summary. Preserve every important detail from all parts — names, numbers, dates, decisions, and rationale — without dropping or duplicating information, and never refer to \"parts\" or \"chunks\". Follow exactly the structure and rules below.\n\n{system}"
+    )
+}
+
+async fn summarize_long(
+    system: &str,
+    user: &str,
+    options: &SummarizeOptions,
+) -> AppResult<String> {
+    if estimate_tokens(user) <= CONTENT_TOKEN_BUDGET {
+        return generate(system, user, options).await;
+    }
+
+    let merge_system = merge_system_prompt(system);
+    let mut current = user.to_string();
+    let mut passes = 0usize;
+
+    loop {
+        let active_system = if passes == 0 { system } else { merge_system.as_str() };
+        let chunks = split_chunks(&current, CONTENT_TOKEN_BUDGET);
+
+        if chunks.len() <= 1 {
+            return generate(active_system, &current, options).await;
+        }
+
+        if passes >= MAX_REDUCE_PASSES {
+            let truncated = truncate_to_tokens(&current, CONTENT_TOKEN_BUDGET);
+            return generate(&merge_system, &truncated, options).await;
+        }
+
+        let mut partials = Vec::with_capacity(chunks.len());
+        for chunk in chunks {
+            partials.push(generate(active_system, &chunk, options).await?);
+        }
+
+        current = partials.join("\n\n---\n\n");
+        passes += 1;
+
+        if estimate_tokens(&current) <= CONTENT_TOKEN_BUDGET {
+            return generate(&merge_system, &current, options).await;
+        }
+    }
 }
 
 async fn generate(system: &str, user: &str, options: &SummarizeOptions) -> AppResult<String> {
@@ -348,6 +476,43 @@ mod tests {
         assert!(prompt.contains("Meetings & Topics"));
         assert!(prompt.contains("Key points"));
         assert!(prompt.contains("Details & context"));
+    }
+
+    #[test]
+    fn estimates_tokens_for_ascii_and_non_ascii() {
+        assert_eq!(estimate_tokens(""), 0);
+        assert_eq!(estimate_tokens("abcd"), 1);
+        assert_eq!(estimate_tokens("abcdefgh"), 2);
+        assert_eq!(estimate_tokens("中文"), 2);
+        assert_eq!(estimate_tokens("éé"), 2);
+    }
+
+    #[test]
+    fn split_chunks_respects_budget_and_keeps_all_text() {
+        let line = "0123456789\n";
+        let text = line.repeat(2_000);
+        let chunks = split_chunks(&text, 100);
+
+        assert!(chunks.len() > 1);
+        assert!(chunks.iter().all(|chunk| estimate_tokens(chunk) <= 100));
+        assert_eq!(chunks.concat(), text);
+    }
+
+    #[test]
+    fn split_chunks_hard_splits_a_single_long_line() {
+        let text = "x".repeat(10_000);
+        let chunks = split_chunks(&text, 50);
+
+        assert!(chunks.len() > 1);
+        assert!(chunks.iter().all(|chunk| estimate_tokens(chunk) <= 50));
+        assert_eq!(chunks.concat(), text);
+    }
+
+    #[test]
+    fn truncates_to_token_budget() {
+        let text = "a".repeat(100);
+        let truncated = truncate_to_tokens(&text, 10);
+        assert_eq!(truncated.len(), 40);
     }
 
     #[test]
