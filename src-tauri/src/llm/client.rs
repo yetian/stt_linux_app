@@ -126,6 +126,19 @@ fn normalize(endpoint: &str) -> String {
     endpoint.trim().trim_end_matches('/').to_string()
 }
 
+async fn request_error(response: reqwest::Response, label: &str) -> AppError {
+    let status = response.status();
+    let body = response.text().await.unwrap_or_default();
+    let detail: String = body.trim().chars().take(800).collect();
+    if detail.is_empty() {
+        AppError::msg(format!("{label} request failed with status {status}"))
+    } else {
+        AppError::msg(format!(
+            "{label} request failed with status {status}: {detail}"
+        ))
+    }
+}
+
 #[derive(Serialize)]
 struct OllamaRequest<'a> {
     model: &'a str,
@@ -159,11 +172,8 @@ async fn ollama_generate(
         .send()
         .await?;
 
-    let status = response.status();
-    if !status.is_success() {
-        return Err(AppError::msg(format!(
-            "ollama request failed with status {status}"
-        )));
+    if !response.status().is_success() {
+        return Err(request_error(response, "ollama").await);
     }
 
     let body: OllamaResponse = response.json().await?;
@@ -226,11 +236,8 @@ async fn openai_chat(
         .send()
         .await?;
 
-    let status = response.status();
-    if !status.is_success() {
-        return Err(AppError::msg(format!(
-            "openai-compatible request failed with status {status}"
-        )));
+    if !response.status().is_success() {
+        return Err(request_error(response, "openai-compatible").await);
     }
 
     let body: OpenAiResponse = response.json().await?;
